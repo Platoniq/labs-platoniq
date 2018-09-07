@@ -1,0 +1,77 @@
+{
+  "__schema": {
+    "types": [{
+      "kind": "INTERFACE",
+      "name": "ParticipatorySpaceInterface",
+      "possibleTypes": [{
+        "name": "ParticipatoryProcess"
+      }, {
+        "name": "ParticipatorySpace"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "ComponentInterface",
+      "possibleTypes": [{
+        "name": "Component"
+      }, {
+        "name": "Meetings"
+      }, {
+        "name": "Proposals"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "AttachableInterface",
+      "possibleTypes": [{
+        "name": "Meeting"
+      }, {
+        "name": "ParticipatoryProcess"
+      }, {
+        "name": "Proposal"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "Author",
+      "possibleTypes": [{
+        "name": "User"
+      }, {
+        "name": "UserGroup"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "CommentableInterface",
+      "possibleTypes": [{
+        "name": "Comment"
+      }, {
+        "name": "Commentable"
+      }, {
+        "name": "Meeting"
+      }, {
+        "name": "Proposal"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "AuthorableInterface",
+      "possibleTypes": [{
+        "name": "Comment"
+      }, {
+        "name": "Proposal"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "CategorizableInterface",
+      "possibleTypes": [{
+        "name": "Meeting"
+      }, {
+        "name": "Proposal"
+      }]
+    }, {
+      "kind": "INTERFACE",
+      "name": "ScopableInterface",
+      "possibleTypes": [{
+        "name": "Meeting"
+      }, {
+        "name": "Proposal"
+      }]
+    }]
+  }
+}

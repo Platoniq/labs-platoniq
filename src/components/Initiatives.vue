@@ -1,21 +1,11 @@
 
 <template>
-  <b-row>
-    <b-col cols="4">
-      <b-list-group>
-        <b-list-group-item v-for="initiative in initiatives"
-          :key="initiative.id"
-          href="#"
-          :active="selectedInitiativeId == initiative.id" @click="selectInitiative(initiative)">
-            {{ initiative.title.translations[0].text }}
-        </b-list-group-item>
-      </b-list-group>
-    </b-col>
-    <b-col>
-      <p v-if="!selectedInitiativeId">Select initiative on the sidebar to see its best candidates</p>
+  <div>
+
+      <p v-if="!selectedInitiativeId">Select initiative on the menu to see its best candidates</p>
       <meetings v-else :initiativeId="selectedInitiativeId" v-on:data-loading="onLoading"  />
-    </b-col>
-  </b-row>
+
+  </div>
 </template>
 
 <script>
@@ -45,27 +35,42 @@ export default {
       query,
       watchLoading(isLoading, countModifier) {
         this.$emit('data-loading', isLoading)
-      }
+      },
+      // Build a menu with the data
+      result({ data, loading, networkStatus }) {
+        this.menu = data.initiatives.map( i => {
+          return {
+            id: i.id,
+            text: i.title.translations[0].text,
+            to: {name: this.section, params: {id: i.id}}
+          }
+        } )
+        console.log("We got some initiatives!", 'title',this.title, 'menu', this.menu, 'raw data', data)
+        this.$emit('section-loaded', this.section, null, this.menu)
+      },
+
     }
   },
   data() {
     return {
-      section:'Decidim Initiatives',
-      initiatives: [],
-      selectedInitiativeId: null
+      section:'initiatives',
+      title: 'Decidim Initiatives',
+      menu: [],
     }
   },
   methods: {
-    selectInitiative(initiative) {
-      this.selectedInitiativeId = initiative.id
-    },
     onLoading(loading) { //listen the children, pass it to the parent
       this.$emit('data-loading', loading)
     }
   },
   mounted() {
-    console.log('created',this.section, this)
-    this.$emit('section-loaded', this.section)
+    console.log('mount', this.section, this.title)
+    this.$emit('section-loaded', this.section, this.title)
+  },
+  computed: {
+    selectedInitiativeId() {
+      return this.$route.params.id
+    }
   }
 }
 </script>

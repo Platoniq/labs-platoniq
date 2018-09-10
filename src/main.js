@@ -1,5 +1,6 @@
 // src/main.js
 import Vue from 'vue'
+import VueRouter from 'vue-router'
 import ApolloClient from "apollo-boost"
 import VueApollo from "vue-apollo"
 import BootstrapVue from 'bootstrap-vue'
@@ -13,6 +14,7 @@ import introspectionQueryResultData from './fragmentTypes.json';
 import 'vue-awesome/icons'
 /* Register component with one of 2 methods */
 import Icon from 'vue-awesome/components/Icon'
+import Initiatives from "./components/Initiatives.vue"
 
 // Fontawesome globally (in your main .js file)
 Vue.component('v-icon', Icon)
@@ -32,8 +34,17 @@ const apolloProvider = new VueApollo({
   })
 })
 
-
+// Routes
 Vue.use(VueApollo)
+const router = new VueRouter({
+  routes: [{
+    name: 'initiatives',
+    path: '/initiatives/:id?',
+    component: Initiatives
+  }]
+})
+
+Vue.use(VueRouter)
 
 // Fix for compatibility issue with Vue 2.5.1
 // https://github.com/bootstrap-vue/bootstrap-vue/issues/1201
@@ -53,5 +64,6 @@ Vue.component = originalVueComponent
 new Vue({
   el: '#app',
   apolloProvider,
+  router,
   render: h => h(App)
 })

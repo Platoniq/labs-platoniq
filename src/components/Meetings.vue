@@ -1,6 +1,9 @@
 <template>
   <div>
-    <b-row v-for="component in components">
+
+    <div v-if="!components.length" class="alert alert-warning">Sorry, no meetings in this component</div>
+
+    <b-row v-for="component in components" :key="component.id">
       <h4>{{ component.name.translations[0].text }}</h4>
 
       <b-table v-bind:class="{muted: $apollo.loading }" bordered hover :items="component.meetings.edges" :fields="fields">
@@ -81,7 +84,7 @@ export default {
       // creates a new variable meeting from the relevant components
       result({ data, loading, networkStatus }) {
         this.components = data.initiative.components.filter( c => c.meetings )
-        console.log("We got some result!", data, this.components)
+        console.log("We got some meetings!", data, this.components)
       },
       error(error) {
         console.error('We\'ve got an error!', error)

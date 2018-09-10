@@ -70,6 +70,8 @@ export default {
 </script>
 
 <style>
+
+@import "../node_modules/leaflet/dist/leaflet.css";
 .header {
   margin-bottom: 2rem;
 }

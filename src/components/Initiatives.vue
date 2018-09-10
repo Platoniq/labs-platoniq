@@ -3,7 +3,7 @@
   <div>
 
       <p v-if="!selectedInitiativeId">Select initiative on the menu to see its best candidates</p>
-      <meetings v-else :initiativeId="selectedInitiativeId" v-on:data-loading="onLoading"  />
+      <meetings v-else :id="selectedInitiativeId" v-on:data-loading="onLoading"  />
 
   </div>
 </template>

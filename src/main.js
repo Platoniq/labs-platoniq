@@ -39,7 +39,7 @@ Vue.use(VueApollo)
 const router = new VueRouter({
   routes: [{
     name: 'initiatives',
-    path: '/initiatives/:id?',
+    path: '/initiatives/:id?/:view?',
     component: Initiatives
   }]
 })

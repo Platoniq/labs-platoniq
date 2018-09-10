@@ -1,6 +1,4 @@
 const path = require('path')
-const webpack = require('webpack')
-const version = require(path.resolve(__dirname, "./package.json")).version
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const nodeSassMagicImporter = require('node-sass-magic-importer')
@@ -19,7 +17,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/',
-    filename: 'build-' + version + '.js'
+    filename: '[name].[chunkhash].js'
   },
   optimization: {
     splitChunks: {
@@ -110,7 +108,9 @@ const config = {
 }
 
 if (env !== 'development') {
-  config.plugins.push(new MiniCssExtractPlugin());
+  config.plugins.push(new MiniCssExtractPlugin({
+    filename: 'style.[contenthash].css',
+  }));
 
   const sassLoader = config.module.rules.find(({ test }) => test.test('.scss') || test.test('.css'));
   // Replace the `vue-style-loader` with

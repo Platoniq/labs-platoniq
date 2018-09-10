@@ -1,7 +1,8 @@
 <template>
   <div>
 
-    <div v-if="!components.length" class="alert alert-warning">Sorry, no meetings in this component</div>
+    <v-icon v-if="loading" name="sync" spin/>
+    <div v-if="!components.length && !loading" class="alert alert-warning">Sorry, no meetings in this component</div>
 
     <div v-for="component in components" :key="component.id">
       <b-row>
@@ -126,6 +127,7 @@ export default {
         console.error('We\'ve got an error!', error)
       },
       watchLoading(isLoading, countModifier) {
+        this.loading = isLoading
         this.$emit('data-loading', isLoading)
       }
     }
@@ -136,6 +138,7 @@ export default {
       markers: [],
       initiative: {},
       components: {},
+      loading: false,
       fields: [
           {
             key: 'id',
@@ -158,8 +161,8 @@ export default {
           }
       ],
       zoom:13,
-      url:'https://{s}.tile.openstreetmaps.org/{z}/{x}/{y}.png',
-      attribution:'&copy; <a href="https://openstreetmaps.org/copyright">OpenStreetMap</a> contributors',
+      url:'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
+      attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
     }
   },
   computed: {

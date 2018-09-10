@@ -1,14 +1,14 @@
 {
   "name": "labs-platoniq",
   "description": "Labs Platoniq/Decidim",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "Ivan Vergés <ivan@platoniq.net>",
   "license": "GPLv3",
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --progress --hot --colors --no-minimize",
     "build": "cross-env NODE_ENV=production webpack --progress",
-    "deploy": "cross-env NODE_ENV=production webpack  --progress --hide-modules && aws s3 sync dist/ s3://labs.platoniq.net/ && aws cloudfront create-invalidation --distribution-id=EKXZEUENMIUEV --paths /"
+    "deploy": "cross-env NODE_ENV=production webpack  --progress --hide-modules && aws s3 sync dist/ s3://labs.platoniq.net/"
   },
   "dependencies": {
     "apollo-boost": "^0.1.15",

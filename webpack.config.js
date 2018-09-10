@@ -1,15 +1,45 @@
-var path = require('path')
-var webpack = require('webpack')
+const path = require('path')
+const webpack = require('webpack')
+const version = require(path.resolve(__dirname, "./package.json")).version
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const nodeSassMagicImporter = require('node-sass-magic-importer')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const CleanWebpackPlugin = require('clean-webpack-plugin')
 
-module.exports = {
-  entry: './src/main.js',
+const env = process.env.NODE_ENV
+const sourceMap = env === 'development';
+const minify = env === 'production'
+
+const config = {
+  entry: path.join(__dirname, 'src', 'main.js'),
+  mode: env,
   output: {
     path: path.resolve(__dirname, './dist'),
-    publicPath: '/dist/',
-    filename: 'build.js'
+    publicPath: '/',
+    filename: 'build-' + version + '.js'
   },
+  optimization: {
+    splitChunks: {
+      // Must be specified for HtmlWebpackPlugin to work correctly.
+      // See: https://github.com/jantimon/html-webpack-plugin/issues/882
+      chunks: 'all',
+    },
+  },
+  devtool: sourceMap ? 'cheap-module-eval-source-map' : undefined,
   module: {
     rules: [
+      {
+        test: /\.vue$/,
+        loader: 'vue-loader',
+      },
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        include: [path.join(__dirname, 'src')],
+      },
       {
         test: /\.css$/,
         use: [
@@ -21,44 +51,20 @@ module.exports = {
         test: /\.scss$/,
         use: [
           'vue-style-loader',
-          'css-loader',
-          'sass-loader'
+          {
+            loader: 'sass-loader',
+             options: {
+               importer: nodeSassMagicImporter(),
+               sourceMap
+             },
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap,
+            },
+          },
         ],
-      },
-      {
-        test: /\.sass$/,
-        use: [
-          'vue-style-loader',
-          'css-loader',
-          'sass-loader?indentedSyntax'
-        ],
-      },
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          loaders: {
-            // Since sass-loader (weirdly) has SCSS as its default parse mode, we map
-            // the "scss" and "sass" values for the lang attribute to the right configs here.
-            // other preprocessors should work out of the box, no loader config like this necessary.
-            'scss': [
-              'vue-style-loader',
-              'css-loader',
-              'sass-loader'
-            ],
-            'sass': [
-              'vue-style-loader',
-              'css-loader',
-              'sass-loader?indentedSyntax'
-            ]
-          }
-          // other vue-loader options go here
-        }
-      },
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
@@ -69,6 +75,23 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+    // make sure to include the plugin!
+    new CleanWebpackPlugin(path.resolve(__dirname, './dist')),
+    new VueLoaderPlugin(),
+    new HtmlWebpackPlugin({
+      filename: path.join(__dirname, 'dist', 'index.html'),
+      template: path.join(__dirname, 'static', 'index.html'),
+      inject: true,
+      minify: minify ? {
+        removeComments: true,
+        // collapseWhitespace: true,
+        removeAttributeQuotes: true,
+        // More options:
+        // https://github.com/kangax/html-minifier#options-quick-reference
+      } : false,
+    }),
+  ],
   resolve: {
     alias: {
       'vue$': 'vue/dist/vue.esm.js'
@@ -81,28 +104,29 @@ module.exports = {
     overlay: true
   },
   performance: {
+    // hints: 'warning'
     hints: false
   },
-  devtool: '#eval-source-map'
 }
 
-if (process.env.NODE_ENV === 'production') {
-  module.exports.devtool = '#source-map'
-  // http://vue-loader.vuejs.org/en/workflow/production.html
-  module.exports.plugins = (module.exports.plugins || []).concat([
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: '"production"'
-      }
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        warnings: false
-      }
-    }),
-    new webpack.LoaderOptionsPlugin({
-      minimize: true
-    })
-  ])
+if (env !== 'development') {
+  config.plugins.push(new MiniCssExtractPlugin());
+
+  const sassLoader = config.module.rules.find(({ test }) => test.test('.scss') || test.test('.css'));
+  // Replace the `vue-style-loader` with
+  // the MiniCssExtractPlugin loader.
+  sassLoader.use[0] = MiniCssExtractPlugin.loader;
 }
+
+if (minify) {
+  config.optimization.minimizer = [
+    new OptimizeCSSAssetsPlugin(),
+    // Enabled by default in production mode if
+    // the `minimizer` option isn't overridden.
+    new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
+    }),
+  ];
+}
+module.exports = config

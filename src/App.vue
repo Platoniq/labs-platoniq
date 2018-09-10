@@ -50,6 +50,7 @@ export default {
         let menu = this.menu.find(m => section === m.id)
         if(menu) menu = item
         else this.menu.push(item)
+        this.breadcrumb[1] = item.menu.find(m => this.$route.params.id === m.id)
       }
     },
     onLoading(loading) {

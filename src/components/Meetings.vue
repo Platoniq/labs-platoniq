@@ -158,15 +158,9 @@ export default {
           }
       ],
       zoom:13,
-      url:'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-      attribution:'&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+      url:'https://{s}.tile.openstreetmaps.org/{z}/{x}/{y}.png',
+      attribution:'&copy; <a href="https://openstreetmaps.org/copyright">OpenStreetMap</a> contributors',
     }
-  },
-  mounted() {
-    // this.$nextTick(() => {
-    //   this.map = this.$refs.map[0]
-    //   console.log('nexttick map',this.$refs.map, this.map)
-    // })
   },
   computed: {
     getView() {

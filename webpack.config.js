@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const env = process.env.NODE_ENV
 const sourceMap = env === 'development';
@@ -87,7 +88,12 @@ const config = {
         // More options:
         // https://github.com/kangax/html-minifier#options-quick-reference
       } : false
-    })
+    }),
+    new CopyWebpackPlugin([{
+      from: path.resolve('static/img'),
+      to: path.resolve('dist/static/img'),
+      toType: 'dir'
+    }])
   ],
   resolve: {
     alias: {

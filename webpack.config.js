@@ -17,7 +17,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/',
-    filename: '[name].[chunkhash].js'
+    filename: '[name].[hash].js'
   },
   optimization: {
     splitChunks: {
@@ -75,7 +75,6 @@ const config = {
   },
   plugins: [
     // make sure to include the plugin!
-    new CleanWebpackPlugin(path.resolve(__dirname, './dist')),
     new VueLoaderPlugin(),
     new HtmlWebpackPlugin({
       filename: path.join(__dirname, 'dist', 'index.html'),
@@ -87,8 +86,8 @@ const config = {
         removeAttributeQuotes: true,
         // More options:
         // https://github.com/kangax/html-minifier#options-quick-reference
-      } : false,
-    }),
+      } : false
+    })
   ],
   resolve: {
     alias: {
@@ -108,14 +107,15 @@ const config = {
 }
 
 if (env !== 'development') {
+  config.plugins.unshift(new CleanWebpackPlugin(path.resolve(__dirname, './dist')))
   config.plugins.push(new MiniCssExtractPlugin({
     filename: 'style.[contenthash].css',
-  }));
+  }))
 
-  const sassLoader = config.module.rules.find(({ test }) => test.test('.scss') || test.test('.css'));
+  const sassLoader = config.module.rules.find(({ test }) => test.test('.scss') || test.test('.css'))
   // Replace the `vue-style-loader` with
   // the MiniCssExtractPlugin loader.
-  sassLoader.use[0] = MiniCssExtractPlugin.loader;
+  sassLoader.use[0] = MiniCssExtractPlugin.loader
 }
 
 if (minify) {

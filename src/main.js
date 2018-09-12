@@ -6,28 +6,26 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 import VueApollo from "vue-apollo"
 import BootstrapVue from 'bootstrap-vue'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
-import 'bootstrap/dist/css/bootstrap.css'
-import App from './App.vue'
 import {IntrospectionFragmentMatcher} from 'apollo-cache-inmemory';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import introspectionQueryResultData from './fragmentTypes.json';
-// or import all icons if you don't care about bundle size
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+import 'bootstrap/dist/css/bootstrap.css'
+import App from './App.vue'
 import 'vue-awesome/icons'
-/* Register component with one of 2 methods */
 import Icon from 'vue-awesome/components/Icon'
 import Initiatives from "./components/Initiatives.vue"
 import GoteoApi from "./plugins/GoteoApi/GoteoApi"
-import {decidim,goteo} from "../config.json"
+const conf = require("../config" + (process.env.NODE_ENV === 'production' ? '.production' : '') + ".json")
 
 // Fontawesome globally (in your main .js file)
 Vue.component('v-icon', Icon)
 // REST API client
-axios.defaults.baseURL = goteo.api_uri
+axios.defaults.baseURL = conf.goteo.api_uri
 axios.defaults.withCredentials = true
 axios.defaults.auth = {
-  username: goteo.api_user,
-  password: goteo.api_key
+  username: conf.goteo.api_user,
+  password: conf.goteo.api_key
 }
 console.log(axios.defaults)
 Vue.use(VueAxios, axios)
@@ -49,7 +47,7 @@ const apolloProvider = new VueApollo({
   defaultClient: new ApolloClient({
     cache,
     connectToDevTools: true,
-    uri: decidim.api_uri
+    uri: conf.decidim.api_uri
   })
 })
 

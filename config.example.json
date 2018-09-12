@@ -1,0 +1,10 @@
+{
+    "decidim": {
+        "api_uri": "https://www.decidim.barcelona/api"
+    },
+    "goteo": {
+        "api_uri": "https://api.goteo.org/v1",
+        "api_user": "-your-api-user-in-goteo-",
+        "api_key": "-your-api-password-in-goteo-"
+    }
+}

@@ -79,4 +79,7 @@ export default {
 table.muted {
   opacity: 0.6 !important;
 }
+.btn {
+  margin:4px;
+}
 </style>

@@ -38,7 +38,18 @@
              <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
               <l-marker v-for="(marker,i) in markers" :key="i" :lat-lng="marker"></l-marker>
+              
+              <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :icon="getIcon('project')"></l-marker>
+
+              <l-marker v-for="p in invests" :key="p.id" v-if="project" :lat-lng="[p.latitude,p.longitude]" :icon="getIcon('euro')"></l-marker>
+
             </l-map>
+          </div>
+          <div class="text-muted">{{info}}</div>
+          
+          <h5>Goteo projects:</h5>
+          <div>
+            <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'initiatives', params: {id: id, view:'map', project: p.id}}">{{p.name}}</b-button>
           </div>
       </div>
     </div>
@@ -93,7 +104,7 @@ query getInitiative($id: ID!) {
 `
 
 export default {
-  props: ['id', 'view'],
+  props: ['id', 'view', 'project'],
   components: {
     LMap,
     LTileLayer,
@@ -120,6 +131,12 @@ export default {
             })
           )
           this.bounds = new L.LatLngBounds(this.markers);
+          let distance = Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000)
+          // Query goteo, all projects
+
+          this.$goteo
+            .getProjects({location: this.bounds.getCenter().lat + ',' + this.bounds.getCenter().lng + ',' + distance})
+            .then(projects => this.projects = projects)
         }
 
       },
@@ -134,7 +151,10 @@ export default {
   },
   data() {
     return {
-      bounds:[],
+      info: '', 
+      result: {}, 
+      projects:[],
+      invests:[],
       markers: [],
       initiative: {},
       components: {},
@@ -168,6 +188,41 @@ export default {
   computed: {
     getView() {
       return 'table' === this.$route.params.view ? 'table' : 'map'
+    },
+  },
+  methods: {
+    statusColor(status) {
+      if(status === 'funded') return 'warning'
+      if(status === 'fulfilled') return 'success'
+      if(status === 'unfunded') return 'danger'
+
+      return 'default';
+    },
+    getIcon(type) {
+      let ops ={
+        iconSize: [38, 38] 
+      }
+      if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
+      if(type === 'euro') {
+        ops.iconUrl = 'static/img/euro-symbol.svg'
+        ops.iconSize = [18, 18] 
+      }
+      return L.icon(ops)
+    }
+  },
+  watch: {
+    project() {
+      // / Query goteo, project (if selected)
+      this.invests = [];
+      if(this.project) {
+        this.$goteo.getInvests(this.project).then(invests => this.invests = invests)
+      }
+    }
+  },
+  mounted() {
+    console.log('invests', this.project)
+    if(this.project) {
+      this.$goteo.getInvests(this.project).then(invests => this.invests = invests)
     }
   }
 }

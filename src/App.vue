@@ -72,7 +72,9 @@ export default {
 
 <style>
 
-@import "../node_modules/leaflet/dist/leaflet.css";
+@import "~leaflet/dist/leaflet.css";
+@import "~leaflet.markercluster/dist/MarkerCluster.css";
+@import "~leaflet.markercluster/dist/MarkerCluster.Default.css";
 .header {
   margin-bottom: 2rem;
 }

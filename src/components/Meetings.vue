@@ -37,17 +37,23 @@
           <div v-else>
              <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-              <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords">
-                <l-popup :content="marker.title"></l-popup>
-              </l-marker>
+              <l-marker-cluster>
+                <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords">
+                  <l-popup :content="marker.title"></l-popup>
+                </l-marker>
+              </l-marker-cluster>
 
-              <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project')">
-                <l-tooltip :content="p.name"></l-tooltip>
-              </l-marker>
+              <l-marker-cluster>
+                <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project')">
+                  <l-tooltip :content="p.name"></l-tooltip>
+                </l-marker>
+              </l-marker-cluster>
 
-              <l-marker v-for="i in invests" :key="i.id" v-if="project" :lat-lng="[i.latitude,i.longitude]" :icon="getIcon('euro')">
-                <l-tooltip :content="i.amount + '€'"></l-tooltip>
-              </l-marker>
+              <l-marker-cluster>
+                <l-marker v-for="i in invests" :key="i.id" v-if="project" :lat-lng="[i.latitude,i.longitude]" :icon="getIcon('euro')">
+                  <l-tooltip :content="i.amount + '€'"></l-tooltip>
+                </l-marker>
+              </l-marker-cluster>
 
             </l-map>
           </div>
@@ -66,6 +72,7 @@
 <script>
 import L from 'leaflet';
 import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
+import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import gql from 'graphql-tag'
 
 const query = gql`
@@ -117,7 +124,8 @@ export default {
     LTileLayer,
     LMarker,
     LPopup,
-    LTooltip
+    LTooltip,
+    'l-marker-cluster': Vue2LeafletMarkerCluster
   },
   apollo: {
     initiative: {

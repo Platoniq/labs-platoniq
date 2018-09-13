@@ -37,14 +37,21 @@
           <div v-else>
              <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-              <l-marker v-for="(marker,i) in markers" :key="i" :lat-lng="marker"></l-marker>
-              
-              <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :icon="getIcon('project')"></l-marker>
+              <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords">
+                <l-popup :content="marker.title"></l-popup>
+              </l-marker>
 
-              <l-marker v-for="p in invests" :key="p.id" v-if="project" :lat-lng="[p.latitude,p.longitude]" :icon="getIcon('euro')"></l-marker>
+              <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project')">
+                <l-tooltip :content="p.name"></l-tooltip>
+              </l-marker>
+
+              <l-marker v-for="i in invests" :key="i.id" v-if="project" :lat-lng="[i.latitude,i.longitude]" :icon="getIcon('euro')">
+                <l-tooltip :content="i.amount + '€'"></l-tooltip>
+              </l-marker>
 
             </l-map>
           </div>
+           
           <div class="text-muted">{{info}}</div>
           
           <h5>Goteo projects:</h5>
@@ -58,7 +65,7 @@
 
 <script>
 import L from 'leaflet';
-import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
+import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
 import gql from 'graphql-tag'
 
 const query = gql`
@@ -108,7 +115,9 @@ export default {
   components: {
     LMap,
     LTileLayer,
-    LMarker
+    LMarker,
+    LPopup,
+    LTooltip
   },
   apollo: {
     initiative: {
@@ -126,12 +135,15 @@ export default {
         if(this.components) {
           console.log("We got some meetings!", data, this.components)
           this.components.forEach(c => c.meetings.edges.forEach(e => {
-              let marker = L.latLng(e.node.coordinates.latitude, e.node.coordinates.longitude)
-              this.markers.push(marker)
+            this.markers.push({
+                id: e.node.id,
+                title: e.node.title.translations[0].text,
+                coords: L.latLng(e.node.coordinates.latitude, e.node.coordinates.longitude)
+              })
             })
           )
-          this.bounds = new L.LatLngBounds(this.markers);
-          let distance = Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000)
+          this.bounds = new L.LatLngBounds(this.markers.map(m => m.coords));
+          let distance = Math.max(2, Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000))
           // Query goteo, all projects
 
           this.$goteo
@@ -203,11 +215,12 @@ export default {
         iconSize: [38, 38] 
       }
       if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
-      if(type === 'euro') {
-        ops.iconUrl = 'static/img/euro-symbol.svg'
-        ops.iconSize = [18, 18] 
-      }
+      if(type === 'euro') ops.iconUrl = 'static/img/pin-payment.svg'
       return L.icon(ops)
+    },
+    gotoProject(p) {
+      console.log('goto',this.id,p.id)
+      this.$router.push({name:'initiatives', params: {id: this.id, view:'map', project: p.id}})
     }
   },
   watch: {

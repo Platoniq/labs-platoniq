@@ -36,7 +36,7 @@ const GoteoApi = {
             .get('/invests/', {params: params})
             .then(response => {
               console.log('got goteo invests',response)
-              resolve(response.data.items) // TODO: paginate
+              resolve(response.data.items.filter(i => i.latitude && i.longitude)) // TODO: paginate
             })
             .catch(error => {
               console.error('Goteo API error while fetching invest', error)

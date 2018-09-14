@@ -62,7 +62,7 @@ export default {
       let menu = this.menu.find(m => to.name === this.section)
       if(menu) {
         this.breadcrumb[1] = menu.menu.find(m => to.params.id === m.id)
-        console.log('route change', to.params.id, menu.text,this.breadcrumb[1].text)
+        // console.log('route change', to.params.id, menu.text,this.breadcrumb[1].text)
       }
 
     }

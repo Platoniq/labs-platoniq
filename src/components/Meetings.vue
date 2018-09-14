@@ -49,8 +49,8 @@
                 </l-marker>
               </l-marker-cluster>
 
-              <l-marker-cluster :options="clusterOptionsPayment">
-                <l-marker v-for="i in invests" :key="i.id" v-if="project" :lat-lng="[i.latitude,i.longitude]" :icon="getIcon('euro')">
+              <l-marker-cluster v-if="project" ref="paymentCluster" :options="clusterOptionsPayment">
+                <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro')">
                   <l-tooltip :content="i.amount + '€'"></l-tooltip>
                 </l-marker>
               </l-marker-cluster>
@@ -59,6 +59,7 @@
           </div>
 
           <div class="text-muted">{{info}}</div>
+          <b-progress v-if="percent<100" :value="percent" :max="100" show-progress animated></b-progress>
 
           <h5>Goteo projects:</h5>
           <div>
@@ -116,7 +117,6 @@ query getInitiative($id: ID!) {
   }
 }
 `
-
 export default {
   props: ['id', 'view', 'project'],
   components: {
@@ -154,9 +154,11 @@ export default {
           let distance = Math.max(2, Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000))
           // Query goteo, all projects
 
+          this.projects = []
           this.$goteo
-            .getProjects({location: this.bounds.getCenter().lat + ',' + this.bounds.getCenter().lng + ',' + distance})
-            .then(projects => this.projects = projects)
+            .getProjects({location: this.bounds.getCenter().lat + ',' + this.bounds.getCenter().lng + ',' + distance}, data =>
+              this.projects = [...this.projects, ...data.items]
+            )
         }
 
       },
@@ -177,27 +179,21 @@ export default {
       invests:[],
       markers: [],
       initiative: {},
+      percent: 0,
       components: {},
       clusterOptionsSignature: {
         disableClusteringAtZoom: 17,
         iconCreateFunction(cluster) {
-          let n = cluster.getAllChildMarkers().length
+          let n = cluster.getChildCount()
           return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-signature', iconSize: L.point(40, 40) });
         }
       },
       clusterOptionsPayment: {
-        iconCreateFunction(cluster) {
-          let n = cluster.getAllChildMarkers().reduce((acc,curr) => {
-            console.log('reduce',acc,curr)
-            console.log('tooltip', curr.getTooltip())
-            let amount2 = parseInt(curr && curr.getTooltip() && curr.getTooltip().getContent()) || 0
-            console.log('amounts',acc,amount2)
-            return acc + amount2
-          }, 0)
-          console.log('cluster', cluster, n)
-          return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
-        }
-      },
+          iconCreateFunction(cluster) {
+            let n = cluster.getAllChildMarkers().reduce((acc,curr) => acc + parseInt(curr && curr.options && curr.options.alt) || 0, 0)
+            return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
+          }
+        },
       loading: false,
       fields: [
           {
@@ -251,6 +247,12 @@ export default {
     gotoProject(p) {
       console.log('goto',this.id,p.id)
       this.$router.push({name:'initiatives', params: {id: this.id, view:'map', project: p.id}})
+    },
+    filterInvests(data) {
+      console.log('inc invests', data,this.$refs.paymentCluster)
+      this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
+      this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
+      // this.$refs.paymentCluster[0].mapObject.refreshClusters()
     }
   },
   watch: {
@@ -258,18 +260,15 @@ export default {
       // / Query goteo, project (if selected)
       this.invests = [];
       if(this.project) {
-        this.$goteo.getInvests(this.project).then(invests => this.invests = invests)
+        this.$goteo.getInvests(this.project,{},this.filterInvests)
       }
     }
   },
   mounted() {
-    console.log('invests', this.project)
+    console.log('mounted', this.project)
     if(this.project) {
-      this.$goteo.getInvests(this.project).then(invests => this.invests = invests)
+      this.$goteo.getInvests(this.project,{},this.filterInvests)
     }
-    // this.$nextTick(() => {
-    //   this.clusterOptions = {disableClusteringAtZoom: 11}
-    // })
   }
 }
 </script>

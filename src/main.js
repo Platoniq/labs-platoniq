@@ -27,7 +27,7 @@ axios.defaults.auth = {
   username: conf.goteo.api_user,
   password: conf.goteo.api_key
 }
-console.log(axios.defaults)
+
 Vue.use(VueAxios, axios)
 
 // Graphql API client

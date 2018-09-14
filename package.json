@@ -1,7 +1,7 @@
 {
   "name": "labs-platoniq",
   "description": "Labs Platoniq/Decidim",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "author": "Ivan Vergés <ivan@platoniq.net>",
   "license": "GPLv3",
   "private": true,

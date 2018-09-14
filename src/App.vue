@@ -84,4 +84,12 @@ table.muted {
 .btn {
   margin:4px;
 }
+.marker-cluster-signature,.marker-cluster-signature div {
+	background-color: rgba(42,129,202,0.6);
+}
+.marker-cluster-payment,.marker-cluster-payment div {
+	background-color: rgba(171,0,11,0.6);
+  color:#fff;
+}
+
 </style>

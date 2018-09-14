@@ -37,8 +37,8 @@
           <div v-else>
              <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-              <l-marker-cluster>
-                <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords">
+              <l-marker-cluster :options="clusterOptionsSignature">
+                <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords" :icon="getIcon('signature')">
                   <l-popup :content="marker.title"></l-popup>
                 </l-marker>
               </l-marker-cluster>
@@ -49,7 +49,7 @@
                 </l-marker>
               </l-marker-cluster>
 
-              <l-marker-cluster>
+              <l-marker-cluster :options="clusterOptionsPayment">
                 <l-marker v-for="i in invests" :key="i.id" v-if="project" :lat-lng="[i.latitude,i.longitude]" :icon="getIcon('euro')">
                   <l-tooltip :content="i.amount + '€'"></l-tooltip>
                 </l-marker>
@@ -57,12 +57,12 @@
 
             </l-map>
           </div>
-           
+
           <div class="text-muted">{{info}}</div>
-          
+
           <h5>Goteo projects:</h5>
           <div>
-            <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'initiatives', params: {id: id, view:'map', project: p.id}}">{{p.name}}</b-button>
+            <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
           </div>
       </div>
     </div>
@@ -171,13 +171,33 @@ export default {
   },
   data() {
     return {
-      info: '', 
-      result: {}, 
+      info: '',
+      result: {},
       projects:[],
       invests:[],
       markers: [],
       initiative: {},
       components: {},
+      clusterOptionsSignature: {
+        disableClusteringAtZoom: 17,
+        iconCreateFunction(cluster) {
+          let n = cluster.getAllChildMarkers().length
+          return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-signature', iconSize: L.point(40, 40) });
+        }
+      },
+      clusterOptionsPayment: {
+        iconCreateFunction(cluster) {
+          let n = cluster.getAllChildMarkers().reduce((acc,curr) => {
+            console.log('reduce',acc,curr)
+            console.log('tooltip', curr.getTooltip())
+            let amount2 = parseInt(curr && curr.getTooltip() && curr.getTooltip().getContent()) || 0
+            console.log('amounts',acc,amount2)
+            return acc + amount2
+          }, 0)
+          console.log('cluster', cluster, n)
+          return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
+        }
+      },
       loading: false,
       fields: [
           {
@@ -212,16 +232,18 @@ export default {
   },
   methods: {
     statusColor(status) {
-      if(status === 'funded') return 'warning'
-      if(status === 'fulfilled') return 'success'
+      if(status === 'funded') return 'success'
+      if(status === 'fulfilled') return 'info'
       if(status === 'unfunded') return 'danger'
+      if(status === 'in_campaign') return 'warning'
 
       return 'default';
     },
     getIcon(type) {
       let ops ={
-        iconSize: [38, 38] 
+        iconSize: [38, 38]
       }
+      if(type === 'signature') ops.iconUrl = 'static/img/pin-signature.svg'
       if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
       if(type === 'euro') ops.iconUrl = 'static/img/pin-payment.svg'
       return L.icon(ops)
@@ -245,6 +267,9 @@ export default {
     if(this.project) {
       this.$goteo.getInvests(this.project).then(invests => this.invests = invests)
     }
+    // this.$nextTick(() => {
+    //   this.clusterOptions = {disableClusteringAtZoom: 11}
+    // })
   }
 }
 </script>

@@ -92,8 +92,13 @@ table.muted {
   /* color:#fff; */
 }
 .marker-cluster-payment,.marker-cluster-payment div {
-	background-color: rgba(171,0,11,0.6);
+	/* background-color: rgba(171,0,11,0.6); */
+	background-color: rgba(0,0,0,0.1);
   color:#fff;
+  font-weight: 600;
+  text-shadow:1px 1px 2px #000;
 }
-
+canvas.leaflet-heatmap-layer {
+  opacity: 0.6;
+}
 </style>

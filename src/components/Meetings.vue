@@ -35,31 +35,37 @@
           </b-table>
 
           <div v-else>
+             <p v-if="project"><input type="checkbox" v-model="socialHeat"> Social Heat (instead of Amount Heat) </p>
+
              <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
+              
               <l-marker-cluster :options="clusterOptionsSignature">
                 <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords" :icon="getIcon('signature')">
-                  <l-popup :content="marker.title"></l-popup>
+                  <l-tooltip :content="marker.title"></l-tooltip>
                 </l-marker>
               </l-marker-cluster>
 
-              <l-marker-cluster>
+              <l-marker-cluster :options="clusterOptionsProject">
                 <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project')">
                   <l-tooltip :content="p.name"></l-tooltip>
                 </l-marker>
               </l-marker-cluster>
 
               <l-marker-cluster v-if="project" ref="paymentCluster" :options="clusterOptionsPayment">
-                <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro')">
+                <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i.amount)">
                   <l-tooltip :content="i.amount + '€'"></l-tooltip>
                 </l-marker>
               </l-marker-cluster>
 
+              <LeafletHeatmap v-if="project" :lat-lngs="investLocations"></LeafletHeatmap>
             </l-map>
           </div>
 
           <div class="text-muted">{{info}}</div>
-          <b-progress v-if="percent<100" :value="percent" :max="100" show-progress animated></b-progress>
+          <b-progress v-if="percent<100" :max="100" animated>
+            <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
+          </b-progress>
 
           <h5>Goteo projects:</h5>
           <div>
@@ -74,6 +80,9 @@
 import L from 'leaflet';
 import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
+import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
+// import Vue2LeafletHeatmap from 'vue2-leaflet-heatmap'
+
 import gql from 'graphql-tag'
 
 const query = gql`
@@ -125,7 +134,8 @@ export default {
     LMarker,
     LPopup,
     LTooltip,
-    'l-marker-cluster': Vue2LeafletMarkerCluster
+    'l-marker-cluster': Vue2LeafletMarkerCluster,
+    LeafletHeatmap
   },
   apollo: {
     initiative: {
@@ -177,6 +187,7 @@ export default {
       result: {},
       projects:[],
       invests:[],
+      socialHeat: false,
       markers: [],
       initiative: {},
       percent: 0,
@@ -188,12 +199,18 @@ export default {
           return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-signature', iconSize: L.point(40, 40) });
         }
       },
+      clusterOptionsProject: {
+        iconCreateFunction(cluster) {
+          let n = cluster.getChildCount()
+          return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-project', iconSize: L.point(40, 40) });
+        }
+      },
       clusterOptionsPayment: {
-          iconCreateFunction(cluster) {
-            let n = cluster.getAllChildMarkers().reduce((acc,curr) => acc + parseInt(curr && curr.options && curr.options.alt) || 0, 0)
-            return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
-          }
-        },
+        iconCreateFunction(cluster) {
+          let n = cluster.getAllChildMarkers().reduce((acc,curr) => acc + parseInt(curr && curr.options && curr.options.alt) || 0, 0)
+          return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
+        }
+      },
       loading: false,
       fields: [
           {
@@ -225,6 +242,13 @@ export default {
     getView() {
       return 'table' === this.$route.params.view ? 'table' : 'map'
     },
+    totalAmount() {
+      return this.invests.reduce((prev, curr) => curr.amount + prev, 0)
+    },
+    investLocations() {
+      let self = this
+      return this.invests.map((i) => [i.latitude, i.longitude, self.socialHeat ? 10 : i.amount])
+    }
   },
   methods: {
     statusColor(status) {
@@ -235,13 +259,16 @@ export default {
 
       return 'default';
     },
-    getIcon(type) {
+    getIcon(type, n) {
       let ops ={
         iconSize: [38, 38]
       }
       if(type === 'signature') ops.iconUrl = 'static/img/pin-signature.svg'
       if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
-      if(type === 'euro') ops.iconUrl = 'static/img/pin-payment.svg'
+      // if(type === 'euro') ops.iconUrl = 'static/img/pin-payment.svg'
+      if(type === 'euro') {
+        return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
+      }
       return L.icon(ops)
     },
     gotoProject(p) {

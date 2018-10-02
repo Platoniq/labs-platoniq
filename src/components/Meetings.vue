@@ -63,7 +63,7 @@
 
           <h5>Goteo projects:</h5>
           <div>
-            <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
+            <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'decidim-initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
           </div>
       </div>
     </div>
@@ -246,7 +246,7 @@ export default {
     },
     gotoProject(p) {
       console.log('goto',this.id,p.id)
-      this.$router.push({name:'initiatives', params: {id: this.id, view:'map', project: p.id}})
+      this.$router.push({name:'decidim-initiatives', params: {id: this.id, view:'map', project: p.id}})
     },
     filterInvests(data) {
       console.log('inc invests', data,this.$refs.paymentCluster)

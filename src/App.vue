@@ -2,13 +2,16 @@
 <template>
   <div id="app">
     <header class="header">
-      <NavHeader :menu="menu" :section="section" :loading="loading" />
+      <NavHeader :section="section" :loading="loading" />
     </header>
 
     <main>
       <b-container>
-        <b-breadcrumb :items="breadcrumb"/>
-        <initiatives v-on:section-loaded="onChangeSection" v-on:data-loading="onLoading" />
+        <h2 v-if="title">{{ title }}</h2>
+        <b-breadcrumb v-if="breadcrumb.length" :items="breadcrumb"/>
+
+        <router-view></router-view>
+
       </b-container>
     </main>
   </div>
@@ -16,57 +19,50 @@
 
 <script>
 import NavHeader from './components/NavHeader.vue'
-import initiatives from './components/Initiatives.vue'
+import routes from './routes.js'
 
 export default {
   name: 'app',
   components: {
     NavHeader,
-    initiatives
   },
   data() {
     return {
       loading: '',
       section: '',
-      title: '',
-      breadcrumb: [],
-      menu: []
+      title: 'Platoniq Labs',
+      breadcrumb: []
     }
   },
   methods: {
-    onChangeSection(section, title, submenu) {
-      this.breadcrumb = [this.breadcrumb[0]||''];
-      this.section = section
-      if(title) {
-        this.title = title
-        this.breadcrumb[0] = {text: title, to: {name: section}}
-      }
-      if(submenu) {
-        let item = {
-          id: section,
-          text: this.title || section,
-          menu: submenu,
-        }
-        let menu = this.menu.find(m => section === m.id)
-        if(menu) menu = item
-        else this.menu.push(item)
-        this.breadcrumb[1] = item.menu.find(m => this.$route.params.id === m.id)
-      }
-    },
     onLoading(loading) {
       this.loading = loading
+    },
+    setBreadcrumb(to) {
+      to = to || this.$route
+      this.breadcrumb = to.matched.map(m => m.meta && m.meta.text || m.name)
+      if(this.breadcrumb.length) title = this.breadcrumb[0]
     }
   },
   watch: {
     $route (to, from){
-      let menu = this.menu.find(m => to.name === this.section)
-      if(menu) {
-        this.breadcrumb[1] = menu.menu.find(m => to.params.id === m.id)
-        // console.log('route change', to.params.id, menu.text,this.breadcrumb[1].text)
-      }
-
+      this.setBreadcrumb(to)
     }
+  },
+  mounted() {
+    this.setBreadcrumb()
   }
+
+  // watch: {
+  //   $route (to, from){
+  //     console.log('route change', to, this.breadcrumb)
+  //     let menu = this.menu.find(m => to.name === this.section)
+  //     if(menu) {
+  //       this.breadcrumb[1] = menu.menu.find(m => to.params.id === m.id)
+  //     }
+
+  //   }
+  // }
 }
 </script>
 

@@ -14,12 +14,13 @@ import 'bootstrap/dist/css/bootstrap.css'
 import App from './App.vue'
 import 'vue-awesome/icons'
 import Icon from 'vue-awesome/components/Icon'
-import Initiatives from "./components/Initiatives.vue"
+import routes from './routes.js'
 import GoteoApi from "./plugins/GoteoApi/GoteoApi"
 const conf = require("../config" + (process.env.NODE_ENV === 'production' ? '.production' : '') + ".json")
 
 // Fontawesome globally (in your main .js file)
 Vue.component('v-icon', Icon)
+
 // REST API client
 axios.defaults.baseURL = conf.goteo.api_uri
 axios.defaults.withCredentials = true
@@ -53,11 +54,7 @@ const apolloProvider = new VueApollo({
 
 // Routes
 const router = new VueRouter({
-  routes: [{
-    name: 'initiatives',
-    path: '/initiatives/:id?/:view?/:project?',
-    component: Initiatives
-  }]
+  routes: routes
 })
 
 Vue.use(VueRouter)

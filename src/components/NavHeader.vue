@@ -7,9 +7,13 @@
 
     <b-collapse is-nav id="nav_collapse">
       <b-navbar-nav>
-        <b-nav-item-dropdown v-for="m in menu" :key="m.id" :text="m.text" :active="true">
-          <b-dropdown-item v-for="s in m.menu" :key="s.id" :to="{name: 'initiatives', params: {id: s.id}}">
-            {{ s.text }}
+        <b-nav-item v-for="m in routes" v-if="!m.children" :key="m.name" :text="m.meta && m.meta.text || m.name" :active="section==m.name" :to="{name: m.name}">
+          {{ m.meta && m.meta.text || m.name }}
+
+        </b-nav-item>
+        <b-nav-item-dropdown v-for="m in routes" v-if="m.children" :key="m.id" :text="m.meta && m.meta.text || m.name" :active="section==m.name">
+          <b-dropdown-item v-for="s in m.children" :key="s.name" :to="{name: s.name}">
+            {{ s.meta && s.meta.text || s.name }}
           </b-dropdown-item>
         </b-nav-item-dropdown>
 
@@ -23,7 +27,15 @@
 
 
 <script>
+import routes from '../routes.js'
+
 export default {
-  props: ['section', 'menu', 'loading'],
+  props: ['section', 'loading'],
+  data() {
+    // console.log(routes)
+    return {
+      routes: routes
+    }
+  }
 }
 </script>

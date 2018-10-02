@@ -14,7 +14,6 @@ export default {
   },
   data() {
     return {
-      section:'projects',
       title: 'Goteo Projects'
     }
   },

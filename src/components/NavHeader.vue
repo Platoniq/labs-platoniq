@@ -7,11 +7,12 @@
 
     <b-collapse is-nav id="nav_collapse">
       <b-navbar-nav>
-        <b-nav-item v-for="m in routes" v-if="!m.children" :key="m.name" :text="m.meta && m.meta.text || m.name" :active="section==m.name" :to="{name: m.name}">
-          {{ m.meta && m.meta.text || m.name }}
 
+        <b-nav-item v-for="m in routes" v-if="!m.children" :key="m.name" :active="section==m.name" :to="{name: m.name}">
+          {{ m.meta && m.meta.text || m.name }}
         </b-nav-item>
-        <b-nav-item-dropdown v-for="m in routes" v-if="m.children" :key="m.id" :text="m.meta && m.meta.text || m.name" :active="section==m.name">
+
+        <b-nav-item-dropdown v-for="m in routes" v-if="m.children" :key="m.id" :text="m.meta && m.meta.text || m.name" :class="section==m.name ? 'active' : ''">
           <b-dropdown-item v-for="s in m.children" :key="s.name" :to="{name: s.name}">
             {{ s.meta && s.meta.text || s.name }}
           </b-dropdown-item>
@@ -30,11 +31,15 @@
 import routes from '../routes.js'
 
 export default {
-  props: ['section', 'loading'],
+  props: ['loading'],
   data() {
-    // console.log(routes)
     return {
-      routes: routes
+      routes: routes,
+    }
+  },
+  computed: {
+    section() {
+        return this.$route.matched.length && this.$route.matched[0].name
     }
   }
 }

@@ -53,7 +53,6 @@ export default {
   },
   data() {
     return {
-      section:'initiatives',
       title: 'Decidim Initiatives',
       menu: [],
     }
@@ -64,7 +63,7 @@ export default {
     }
   },
   mounted() {
-    console.log('mount', this.section, this.title)
+    console.log('mounted initatives', this.title)
     this.$emit('section-loaded', this.section, this.title)
   },
   computed: {

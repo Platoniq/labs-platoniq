@@ -1,8 +1,9 @@
+
 // This is your plugin object. It can be exported to be used anywhere.
 const GoteoApi = {
-    // The install method is all that needs to exist on the plugin object.
-    // It takes the global Vue object as well as user-defined options.
-    install(Vue, axios) {
+  // The install method is all that needs to exist on the plugin object.
+  // It takes the global Vue object as well as user-defined options.
+  install(Vue, axios) {
       Vue.prototype.$goteo = {
         sources: {
           project: null,
@@ -16,16 +17,30 @@ const GoteoApi = {
           Object.keys(sources).forEach(k => sources[k] && sources[k].cancel('abort sequential ' + k + ' fetch'))
         },
 
+        prepareParams(params) {
+          let prepared = new URLSearchParams();
+          for (let p in params) {
+            if (Array.isArray(params[p])) {
+              params[p].forEach(v => prepared.append(p, v))
+            } else {
+              prepared.append(p, params[p]);
+            }
+          }
+          return prepared
+        },
+
         getProjects(params, callback) {
           callback = typeof callback === 'function' ? callback : () => {}
           params = params || {}
           params.limit = 50
           params.page = params.page || 0
+          console.log('preparing projects', params)
+
           this.cancel('project')
           this.sources.project = axios.CancelToken.source()
           axios
             .get('/projects/',{
-              params: params,
+              params: this.prepareParams(params),
               cancelToken: this.sources.project.token
             })
             .then(response => {
@@ -49,28 +64,19 @@ const GoteoApi = {
             })
         },
 
-        getInvests(project, params, callback) {
+        getInvests(projects, params, callback) {
           callback = typeof callback === 'function' ? callback : () => {}
           params = params || {}
-          params.project = project
+          params.project = projects
           params.loc_status = 'located'
           params.limit = 50
           params.page = params.page || 0
-          console.log('preparing invests', params)
-          let prepared = new URLSearchParams();
-          for(let p in params) {
-            if (Array.isArray(params[p])){
-              params[p].forEach(v => prepared.append(p, v))
-            } else {
-              prepared.append(p, params[p]);
-            }
-          }
-          console.log('fetch invests', prepared)
+          // console.log('preparing invests', params)
           this.cancel('invest')
           this.sources.invest = axios.CancelToken.source()
           axios
             .get('/invests/', {
-              params: prepared,
+              params: this.prepareParams(params),
               cancelToken: this.sources.invest.token
             })
             .then(response => {

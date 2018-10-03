@@ -1,14 +1,27 @@
 <template>
   <div>
     <b-row>
-        <b-col cols="12">
-            <multiselect v-model="filters.projects" :options="projectList" @input="onProject" :multiple="true" label="name" track-by="name" placeholder="Select some projects...">
+        <b-col cols="6" class="filter-footprints">
+            <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
+                <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
+                <template slot="option" slot-scope="props"><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</template>
+            </multiselect>
+        </b-col>
+        <b-col cols="6" class="filter-sdg">
+            <multiselect v-model="filters.sdg" :options="sdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
+                <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
+                <template slot="option" slot-scope="props"><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</template>
+            </multiselect>
+        </b-col>
+        <b-col cols="10" class="filter-projects">
+            <multiselect v-model="filters.projects" :options="projectList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Show invests for some projects">
+                <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['image-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
                 <template slot="option" slot-scope="props"><img :src="props.option['image-url']" class="image-circle"> {{ props.option.name }} - <strong>{{ props.option.amount }} €</strong></template>
             </multiselect>
         </b-col>
 
-        <b-col cols="12" v-if="filters.projects.length">
-            <switches v-model="filters.socialHeat" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
+        <b-col cols="2" v-if="filters.projects.length">
+            <switches v-model="filters.socialHeat" @input="onChange" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
         </b-col>
     </b-row>
   </div>
@@ -43,12 +56,14 @@ export default {
         filters: {
             socialHeat: false,
             projects: [], // selected projects
-        }
+            footprints: [], // selected footprints
+        },
+        footprintList: [],
+        sdgList: []
     }
   },
   methods: {
-      onProject(projects) {
-          console.log('project selected',projects, this.filters)
+      onChange() {
           if(this.emitEvent) this.$emit(this.emitEvent, this.filters)
           if(this.toQueryString) {
             console.log('to query string',this.$route, this.$router)
@@ -56,6 +71,30 @@ export default {
             // this.$router.push({ name: this.$route.name, query: this.filters.map() })
           }
       }
+  },
+  mounted() {
+    if(!this.footprintList.length) {
+        this.axios
+        .get('/footprints/')
+        .then(response => {
+            console.log('got goteo footprints', response)
+            this.footprintList = response.data.items
+        })
+        .catch(error => {
+            console.error('Goteo API error while fetching footprints', error)
+        })
+    }
+    if(!this.sdgList.length) {
+        this.axios
+        .get('/sdgs/')
+        .then(response => {
+            console.log('got goteo sdgs', response)
+            this.sdgList = response.data.items
+        })
+        .catch(error => {
+            console.error('Goteo API error while fetching SDGs', error)
+        })
+    }
   }
 }
 </script>
@@ -65,6 +104,9 @@ export default {
 <style>
 .multiselect--active {
   z-index: 10000;
+}
+.filter-projects .multiselect__option--highlight,.filter-projects .multiselect__option--highlight::after,.filter-projects .multiselect__tag {
+    background-color: rgb(43,157,155);
 }
 .image-circle {
     width: 32px;

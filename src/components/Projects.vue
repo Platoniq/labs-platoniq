@@ -2,7 +2,7 @@
 <template>
   <div>
 
-      <h2>Goteo projects</h2>
+      <!-- <h2>Goteo projects</h2> -->
 
       <filters :project-list="projects" :to-query-string="true" v-on:filter="onFilter"></filters>
 
@@ -90,16 +90,25 @@ export default {
       if(!this.filters.projects)
         this.loadProjects()
     },
-    loadProjects() {
+    loadProjects(filters) {
       this.projects = []
       this.invests = []
+      this.$goteo.cancel() // Cancel any current loading
       let center = this.map.getCenter();
       let bounds = this.map.getBounds();
       // let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
-      let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(bounds.getNorthWest()) / 1000)))
-      console.log('load projects',center,distance,this.zoom)
+      let distance = Math.max(1,Math.round(center.distanceTo(bounds.getNorthWest()) / 1000))
+      let params = {location: center.lat + ',' + center.lng + ',' + distance}
+      if(distance > 500) params = {}
+      if(filters) {
+        if(filters.footprints)
+          params.footprint = filters.footprints.map(f => f.id)
+        if(filters.sdgs)
+          params.sdg = filters.sdgs.map(f => f.id)
+      }
+      console.log('load projects',params)
       this.$goteo
-        .getProjects({location: center.lat + ',' + center.lng + ',' + distance}, data => {
+        .getProjects(params, data => {
             this.info = data.meta.total + ' Projects'
             this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
             return this.projects = [...this.projects, ...data.items]
@@ -127,7 +136,7 @@ export default {
       if(this.filters.projects && this.filters.projects.length)
         this.loadInvests(this.filters.projects)
       else
-        this.loadProjects()
+        this.loadProjects(this.filters)
     },
     getIcon(type, ob) {
       let ops ={

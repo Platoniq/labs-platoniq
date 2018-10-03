@@ -39,7 +39,7 @@
 
              <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-              
+
               <l-marker-cluster :options="clusterOptionsSignature">
                 <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords" :icon="getIcon('signature')">
                   <l-tooltip :content="marker.title"></l-tooltip>
@@ -246,8 +246,7 @@ export default {
       return this.invests.reduce((prev, curr) => curr.amount + prev, 0)
     },
     investLocations() {
-      let self = this
-      return this.invests.map((i) => [i.latitude, i.longitude, self.socialHeat ? 10 : i.amount])
+      return this.invests.map((i) => [i.latitude, i.longitude, this.socialHeat ? 10 : i.amount])
     }
   },
   methods: {

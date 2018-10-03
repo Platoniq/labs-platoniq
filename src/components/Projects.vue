@@ -4,38 +4,41 @@
 
       <h2>Goteo projects</h2>
 
-      <filters></filters>
+      <filters :project-list="projects" v-on:filter="onFilter"></filters>
+
+      <div class="progress-wrap">
+        <b-progress v-if="percent<100" :max="100" animated variant="info">
+          <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
+        </b-progress>
+      </div>
 
       <l-map ref="map" style="height: 500px" :zoom="zoom" :center="center" @move="mapMove">
       <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
       <l-marker-cluster :options="clusterOptionsProject">
-        <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project', p)">
+        <l-marker v-for="p in projectLocations" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
           <l-tooltip :content="p.name"></l-tooltip>
         </l-marker>
       </l-marker-cluster>
 
-      <l-marker-cluster v-if="project" ref="paymentCluster" :options="clusterOptionsPayment">
+      <l-marker-cluster :options="clusterOptionsPayment">
         <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i)">
           <l-tooltip :content="i.amount + '€'"></l-tooltip>
         </l-marker>
       </l-marker-cluster>
 
-      <LeafletHeatmap v-if="project" :lat-lngs="investLocations"></LeafletHeatmap>
+      <LeafletHeatmap :lat-lngs="investLocations"></LeafletHeatmap>
     </l-map>
 
     <div class="text-muted">{{info}}</div>
-    <b-progress v-if="percent<100" :max="100" animated variant="info">
-      <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
-    </b-progress>
 
   </div>
 
 </template>
 
 <script>
-import L from 'leaflet';
-import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
+import L from 'leaflet'
+import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet'
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 import Filters from './GoteoFilters.vue'
@@ -56,8 +59,10 @@ export default {
       map: null,
       center: [41.5,-1],
       projects: [],
-      percent:0,
+      invests: [],
+      percent:100,
       info:'',
+      filters: {},
       clusterOptionsProject: {
         iconCreateFunction(cluster) {
           let n = cluster.getChildCount()
@@ -81,18 +86,19 @@ export default {
       this.$emit('data-loading', loading)
     },
     mapMove(ev) {
-      console.log('move map',ev)
-      this.loadProjects()
+      // console.log('move map',ev)
+      if(!this.filters.projects)
+        this.loadProjects()
     },
     loadProjects() {
       this.projects = []
+      this.invests = []
       let center = this.map.getCenter();
       let bounds = this.map.getBounds();
-      let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(bounds.getSouthWest()) / 1000)))
+      let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
       console.log('load projects',center,distance,this.zoom)
       this.$goteo
         .getProjects({location: center.lat + ',' + center.lng + ',' + distance}, data => {
-            console.log(data.meta)
             this.info = data.meta.total + ' Projects'
             this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
             return this.projects = [...this.projects, ...data.items]
@@ -100,12 +106,30 @@ export default {
         )
 
     },
+    loadInvests(projects) {
+      this.invests = []
+      console.log('load invests',projects)
+      this.$goteo
+        .getInvests(projects.map(p => p.id), {}, data => {
+            this.info = data.meta.total + ' Invests'
+            this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
+            return this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
+          }
+        )
+
+    },
+    onFilter(filters) {
+      this.filters = filters
+      console.log('filter', filters, filters.projects)
+      this.$goteo.cancel() // Cancel current loading requests
+      this.percent = 100
+      if(this.filters.projects)
+        this.loadInvests(this.filters.projects)
+    },
     getIcon(type, ob) {
       let ops ={
         iconSize: [38, 38]
       }
-      if(type === 'signature') ops.iconUrl = 'static/img/pin-signature.svg'
-      // if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
       if(type === 'project') {
         ops.iconUrl = ob['image-url']
         ops.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive image-project'
@@ -114,6 +138,16 @@ export default {
         return L.divIcon({ html: '<div><span>' + ob.amount +'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
       }
       return L.icon(ops)
+    }
+  },
+  computed: {
+    projectLocations() {
+      if(this.filters.projects && this.filters.projects.length)
+        return this.filters.projects
+      return this.projects
+    },
+    investLocations() {
+      return this.invests.map((i) => [i.latitude, i.longitude, this.filters.socialHeat ? 10 : i.amount])
     }
   },
   mounted() {
@@ -125,3 +159,10 @@ export default {
   }
 }
 </script>
+
+<style>
+.progress-wrap {
+  height:30px;
+  padding:8px 0 11px;
+}
+</style>

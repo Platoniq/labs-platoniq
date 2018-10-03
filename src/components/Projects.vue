@@ -32,7 +32,26 @@
 
     <div class="text-muted">{{info}}</div>
 
-    <p>&nbsp;</p>
+    <hr>
+
+    <div>
+
+      <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
+        <template slot="name" slot-scope="{item}">
+          {{ item.name }}
+        </template>
+        <template slot="description" slot-scope="{item}">
+          <p class="text-muted">{{ item['description-short'] }}</p>
+        </template>
+        <template slot="amount" slot-scope="{item}">
+          {{ item.amount }} €
+        </template>
+        <template slot="links" slot-scope="{item}">
+          <a :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></a>
+        </template>
+      </b-table>
+
+    </div>
 
   </div>
 
@@ -70,6 +89,26 @@ export default {
         sdgs:null,
         socialHeat: false,
       },
+      fields: [
+        {
+          key: 'name',
+          label: 'Name',
+          sortable: true
+        },
+        {
+          key: 'description',
+          label: 'Description'
+        },
+        {
+          key: 'amount',
+          label: 'Amount',
+          sortable: true
+        },
+        {
+          key: 'links',
+          label: 'Links'
+        }
+      ],
       clusterOptionsProject: {
         iconCreateFunction(cluster) {
           let n = cluster.getChildCount()

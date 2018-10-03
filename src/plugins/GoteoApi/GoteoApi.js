@@ -32,6 +32,7 @@ const GoteoApi = {
         getProjects(params, callback) {
           callback = typeof callback === 'function' ? callback : () => {}
           params = params || {}
+          params.status = ['in_campaign', 'funded', 'fulfilled']
           params.limit = 50
           params.page = params.page || 0
           console.log('preparing projects', params)

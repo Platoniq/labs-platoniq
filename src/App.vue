@@ -83,4 +83,7 @@ table.muted {
 canvas.leaflet-heatmap-layer {
   opacity: 0.6;
 }
+img.image-project {
+  border-radius: 50%;
+}
 </style>

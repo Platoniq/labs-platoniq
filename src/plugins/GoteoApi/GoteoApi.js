@@ -4,15 +4,22 @@ const GoteoApi = {
     // It takes the global Vue object as well as user-defined options.
     install(Vue, axios) {
       Vue.prototype.$goteo = {
+        // stopProjects: false,
+        // stopInvests: false,
+        projectSource: null,
 
         getProjects(params, callback) {
           callback = typeof callback === 'function' ? callback : () => {}
           params = params || {}
           params.limit = 50
           params.page = params.page || 0
-          axios
-          .get('/projects/',{
-            params: params
+          if(this.projectSource) {
+            this.projectSource.cancel('abort sequential project fetch')
+          }
+          this.projectSource = axios.CancelToken.source()
+          axios.get('/projects/',{
+            params: params,
+            cancelToken: this.projectSource.token
           })
           .then(response => {
             callback(response.data)
@@ -20,11 +27,18 @@ const GoteoApi = {
             if (response.data.meta.total > (response.data.meta.page + 1) * response.data.meta.limit) {
               params.page++
               this.getProjects(params, callback)
+            } else {
+              this.projectSource = null
+              console.log('finish loading projects')
             }
-            console.log('got goteo projects',response)
+            console.log('got goteo projects',params, response)
           })
           .catch(error => {
-            console.error('Goteo API error while fetching projects', error)
+            if (axios.isCancel(error)) {
+              console.log('Request canceled', error.message);
+            } else {
+              console.error('Goteo API error while fetching projects', error)
+            }
           })
         },
 

@@ -3,20 +3,20 @@
     <b-row>
         <b-col cols="6" class="filter-footprints">
             <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
-                <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
-                <template slot="option" slot-scope="props"><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</template>
+                <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
+                <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
         </b-col>
         <b-col cols="6" class="filter-sdgs">
             <multiselect v-model="filters.sdgs" :options="sdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
-                <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
-                <template slot="option" slot-scope="props"><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</template>
+                <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
+                <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
         </b-col>
         <b-col cols="10" class="filter-projects">
             <multiselect v-model="filters.projects" :options="projectList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Show invests for some projects">
-                <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['image-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
-                <template slot="option" slot-scope="props"><img :src="props.option['image-url']" class="image-circle"> {{ props.option.name }} - <strong>{{ props.option.amount }} €</strong></template>
+                <template slot="tag" slot-scope="{option,remove}"><span class="multiselect__tag"><span><img :src="option['image-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)"  @mousedown.prevent="remove(option)"></i></span></template>
+                <template slot="option" slot-scope="{option}"><img :src="option['image-url']" class="image-circle"> {{ option.name }} - <strong>{{ option.amount }} €</strong></template>
             </multiselect>
         </b-col>
 

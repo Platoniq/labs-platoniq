@@ -84,7 +84,7 @@ const GoteoApi = {
               // Check if we need more
               if (response.data.meta.total > (response.data.meta.page + 1) * response.data.meta.limit) {
                 params.page++
-                this.getInvests(project, params, callback)
+                this.getInvests(projects, params, callback)
               } else {
                 this.sources.invest = null
                 console.log('finish loading invests')

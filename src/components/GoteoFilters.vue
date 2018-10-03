@@ -7,8 +7,8 @@
                 <template slot="option" slot-scope="props"><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</template>
             </multiselect>
         </b-col>
-        <b-col cols="6" class="filter-sdg">
-            <multiselect v-model="filters.sdg" :options="sdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
+        <b-col cols="6" class="filter-sdgs">
+            <multiselect v-model="filters.sdgs" :options="sdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
                 <template slot="tag" slot-scope="props"><span class="multiselect__tag"><span><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon"></i></span></template>
                 <template slot="option" slot-scope="props"><img :src="props.option['icon-url']" class="image-circle"> {{ props.option.name }}</template>
             </multiselect>
@@ -20,7 +20,7 @@
             </multiselect>
         </b-col>
 
-        <b-col cols="2" v-if="filters.projects.length">
+        <b-col cols="2" v-if="filters.projects && filters.projects.length">
             <switches v-model="filters.socialHeat" @input="onChange" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
         </b-col>
     </b-row>
@@ -38,6 +38,15 @@ export default {
         type: Array,
         default: () => []
     },
+    filters: {
+        type: Object,
+        default: () => ({
+            socialHeat: false,
+            projects: [], // selected projects
+            footprints: [], // selected footprints
+            sdgs: [], // selected sdgs
+        })
+    },
     emitEvent: {
         type: String,
         default: 'filter'
@@ -53,11 +62,6 @@ export default {
   },
   data() {
     return {
-        filters: {
-            socialHeat: false,
-            projects: [], // selected projects
-            footprints: [], // selected footprints
-        },
         footprintList: [],
         sdgList: []
     }

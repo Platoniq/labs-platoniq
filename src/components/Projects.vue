@@ -4,7 +4,7 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :project-list="projects" :to-query-string="true" v-on:filter="onFilter"></filters>
+      <filters :project-list="projects" :filters="filters" :to-query-string="true" v-on:filter="onFilter"></filters>
 
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
@@ -16,7 +16,7 @@
       <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
       <l-marker-cluster :options="clusterOptionsProject">
-        <l-marker v-for="p in projectLocations" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
+        <l-marker v-for="p in projectLocations" :key="p.id" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
           <l-tooltip :content="p.name"></l-tooltip>
         </l-marker>
       </l-marker-cluster>
@@ -31,6 +31,8 @@
     </l-map>
 
     <div class="text-muted">{{info}}</div>
+
+    <p>&nbsp;</p>
 
   </div>
 
@@ -62,7 +64,12 @@ export default {
       invests: [],
       percent:100,
       info:'',
-      filters: {},
+      filters: {
+        projects:null,
+        footprints:null,
+        sdgs:null,
+        socialHeat: false,
+      },
       clusterOptionsProject: {
         iconCreateFunction(cluster) {
           let n = cluster.getChildCount()
@@ -76,7 +83,6 @@ export default {
         }
       },
       zoom:7,
-      project:null,
       url:'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
       attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
     }
@@ -87,8 +93,8 @@ export default {
     },
     mapMove(ev) {
       // console.log('move map',ev)
-      if(!this.filters.projects)
-        this.loadProjects()
+      if(!this.filters.projects || !this.filters.projects.length)
+        this.loadProjects(this.filters)
     },
     loadProjects(filters) {
       this.projects = []
@@ -130,7 +136,7 @@ export default {
     },
     onFilter(filters) {
       this.filters = filters
-      console.log('filter', filters, filters.projects)
+      console.log('filter', filters, filters.sdgs, filters.projects)
       this.$goteo.cancel('invest') // Cancel current loading requests
       this.percent = 100
       if(this.filters.projects && this.filters.projects.length)
@@ -150,6 +156,9 @@ export default {
         return L.divIcon({ html: '<div><span>' + ob.amount +'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
       }
       return L.icon(ops)
+    },
+    gotoProject(p) {
+      console.log('goto project', p)
     }
   },
   computed: {
@@ -170,7 +179,7 @@ export default {
       this.loadProjects()
       if(this.$route.query && this.$route.query.filters) {
         this.onFilter( JSON.parse(this.$route.query.filters) )
-        console.log('query', this.$route.query, this.filters)
+        console.log('query', this.$route.query, this.filters, this.filters.sdgs)
       }
     })
   }

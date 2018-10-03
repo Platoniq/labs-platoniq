@@ -4,7 +4,7 @@
 
       <h2>Goteo projects</h2>
 
-      <filters :project-list="projects" v-on:filter="onFilter"></filters>
+      <filters :project-list="projects" :to-query-string="true" v-on:filter="onFilter"></filters>
 
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
@@ -95,7 +95,8 @@ export default {
       this.invests = []
       let center = this.map.getCenter();
       let bounds = this.map.getBounds();
-      let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
+      // let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
+      let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(bounds.getNorthWest()) / 1000)))
       console.log('load projects',center,distance,this.zoom)
       this.$goteo
         .getProjects({location: center.lat + ',' + center.lng + ',' + distance}, data => {
@@ -121,10 +122,12 @@ export default {
     onFilter(filters) {
       this.filters = filters
       console.log('filter', filters, filters.projects)
-      this.$goteo.cancel() // Cancel current loading requests
+      this.$goteo.cancel('invest') // Cancel current loading requests
       this.percent = 100
-      if(this.filters.projects)
+      if(this.filters.projects && this.filters.projects.length)
         this.loadInvests(this.filters.projects)
+      else
+        this.loadProjects()
     },
     getIcon(type, ob) {
       let ops ={
@@ -154,7 +157,12 @@ export default {
     // mapObject is not available directly in vue's mounted hook.
     this.$nextTick(() => {
       this.map = this.$refs.map.mapObject // work as expected
+      // Check querystring
       this.loadProjects()
+      if(this.$route.query && this.$route.query.filters) {
+        this.onFilter( JSON.parse(this.$route.query.filters) )
+        console.log('query', this.$route.query, this.filters)
+      }
     })
   }
 }

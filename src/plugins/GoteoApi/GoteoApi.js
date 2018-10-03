@@ -10,7 +10,8 @@ const GoteoApi = {
         },
 
         cancel(target) {
-          let sources = this.sources[target] ? {[target]:this.sources[target]} : this.sources
+          let sources = this.sources[target] ? {[target]:this.sources[target]} : {}
+          if(target === undefined) sources = this.sources
           console.log('canceling', sources)
           Object.keys(sources).forEach(k => sources[k] && sources[k].cancel('abort sequential ' + k + ' fetch'))
         },

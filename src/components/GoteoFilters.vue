@@ -20,7 +20,20 @@ import Multiselect from 'vue-multiselect'
 
 export default {
   name: "GoteoFilters",
-  props: ['projectList'],
+  props: {
+    projectList: {
+        type: Array,
+        default: () => []
+    },
+    emitEvent: {
+        type: String,
+        default: 'filter'
+    },
+    toQueryString: {
+        type: Boolean,
+        default: false
+    }
+  },
   components: {
     Switches,
     Multiselect
@@ -36,7 +49,12 @@ export default {
   methods: {
       onProject(projects) {
           console.log('project selected',projects, this.filters)
-          this.$emit('filter', this.filters)
+          if(this.emitEvent) this.$emit(this.emitEvent, this.filters)
+          if(this.toQueryString) {
+            console.log('to query string',this.$route, this.$router)
+            this.$router.push({ name: this.$route.name, query: {filters: JSON.stringify(this.filters)} })
+            // this.$router.push({ name: this.$route.name, query: this.filters.map() })
+          }
       }
   }
 }

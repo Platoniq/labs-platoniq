@@ -2,13 +2,18 @@
   <div>
     <b-row>
         <b-col cols="6" class="filter-footprints">
-            <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
+
+            <div>
+                <b-button v-for="f in footprintList" :key="f.id" @click="filters.footprints=toggle(filters.footprints, f);onChange()" variant="default" :pressed="!!filters.footprints.find(v => v.id==f.id)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-button>
+            </div>
+
+            <!-- <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
-            </multiselect>
+            </multiselect> -->
         </b-col>
         <b-col cols="6" class="filter-sdgs">
-            <multiselect v-model="filters.sdgs" :options="sdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
+            <multiselect v-if="filters.footprints && filters.footprints.length" v-model="filters.sdgs" :options="filteredSdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
@@ -74,6 +79,20 @@ export default {
             this.$router.push({ name: this.$route.name, query: {filters: JSON.stringify(this.filters)} })
             // this.$router.push({ name: this.$route.name, query: this.filters.map() })
           }
+      },
+      toggle(list, el) {
+        if(list.find(v => v.id==el.id))
+            list = list.filter(v => v.id!=el.id)
+        else
+            list.push(el)
+        return list
+      }
+  },
+  computed: {
+      filteredSdgList() {
+          let footprints = this.filters.footprints.map(f => f.id)
+          console.log(footprints)
+          return this.sdgList.filter(v => v.footprints.find(f => footprints.indexOf(f.id)))
       }
   },
   mounted() {
@@ -116,5 +135,12 @@ export default {
     width: 32px;
     height: 32px;
     border-radius:50%;
+}
+.image-footprint {
+    width: auto;
+    height: 48px;
+}
+.btn.active {
+    background-color: rgb(43,157,155);
 }
 </style>

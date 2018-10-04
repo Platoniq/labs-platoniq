@@ -1,31 +1,36 @@
 <template>
   <div>
     <b-row>
-        <b-col cols="6" class="filter-footprints">
+        <b-col class="filter-footprints">
 
-            <div>
-                <b-button v-for="f in footprintList" :key="f.id" @click="filters.footprints=toggle(filters.footprints, f);onChange()" variant="default" :pressed="!!filters.footprints.find(v => v.id==f.id)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-button>
-            </div>
+            <b-row>
+                <b-button class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="activeFootprints.indexOf(f.id)>-1"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-button>
+            </b-row>
 
             <!-- <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect> -->
         </b-col>
-        <b-col cols="6" class="filter-sdgs">
-            <multiselect v-if="filters.footprints && filters.footprints.length" v-model="filters.sdgs" :options="filteredSdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
+        <b-col :cols="hasFootprints ? 6 : 2" class="filter-sdgs">
+            <multiselect v-if="hasFootprints" v-model="filters.sdgs" :options="filteredSdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
+
+            <p v-else-if="loaded" class="text-muted"><em>Filter by footprints</em></p>
+            <v-icon v-else name="sync" spin/>
         </b-col>
-        <b-col cols="10" class="filter-projects">
+    </b-row>
+    <b-row>
+        <b-col class="filter-projects">
             <multiselect v-model="filters.projects" :options="projectList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Show invests for some projects">
                 <template slot="tag" slot-scope="{option,remove}"><span class="multiselect__tag"><span><img :src="option['image-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)"  @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope="{option}"><img :src="option['image-url']" class="image-circle"> {{ option.name }} - <strong>{{ option.amount }} €</strong></template>
             </multiselect>
         </b-col>
 
-        <b-col cols="2" v-if="filters.projects && filters.projects.length">
+        <b-col cols="2" v-if="hasProjects">
             <switches v-model="filters.socialHeat" @input="onChange" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
         </b-col>
     </b-row>
@@ -43,22 +48,18 @@ export default {
         type: Array,
         default: () => []
     },
-    filters: {
+    queryFilters: {
         type: Object,
         default: () => ({
-            socialHeat: false,
             projects: [], // selected projects
             footprints: [], // selected footprints
             sdgs: [], // selected sdgs
+            socialHeat: false,
         })
     },
     emitEvent: {
         type: String,
         default: 'filter'
-    },
-    toQueryString: {
-        type: Boolean,
-        default: false
     }
   },
   components: {
@@ -68,40 +69,63 @@ export default {
   data() {
     return {
         footprintList: [],
-        sdgList: []
+        sdgList: [],
+        filters: {},
+        loaded: false,
+        loading:0,
+        activeFootprints: []
     }
   },
   methods: {
-      onChange() {
-          if(this.emitEvent) this.$emit(this.emitEvent, this.filters)
-          if(this.toQueryString) {
-            console.log('to query string',this.$route, this.$router)
-            this.$router.push({ name: this.$route.name, query: {filters: JSON.stringify(this.filters)} })
-            // this.$router.push({ name: this.$route.name, query: this.filters.map() })
+      onChange(filter, f) {
+          console.log('onchange', filter, 'event:',this.emitEvent, 'loaded:',this.loaded, this.filters)
+          if(filter==='footprint') {
+              this.filters.footprints = this.toggle(this.filters.footprints, f)
+              this.activeFootprints = this.filters.footprints.map(v => v.id)
           }
+          if(this.emitEvent && this.loaded) this.$emit(this.emitEvent, this.filters)
       },
       toggle(list, el) {
+        console.log('toggle',list,el)
+        if(!Array.isArray(list)) list = []
         if(list.find(v => v.id==el.id))
             list = list.filter(v => v.id!=el.id)
         else
             list.push(el)
         return list
+      },
+      hasFootprint(f) {
+        console.log('has footprint', f, this.filters.footprints)
+        return this.hasFootprints && !!this.filters.footprints.find(v => v.id==f.id)
       }
   },
   computed: {
+      hasFootprints() {
+        //   return this.filters.footprints && this.filters.footprints.length
+          return this.activeFootprints.length > 0
+      },
+      hasSdgs() {
+          return this.filters.sdgs && this.filters.sdgs.length
+      },
+      hasProjects() {
+          return this.filters.projects && this.filters.projects.length
+      },
       filteredSdgList() {
-          let footprints = this.filters.footprints.map(f => f.id)
-          console.log(footprints)
+          let footprints = this.hasFootprints ? this.filters.footprints.map(f => f.id) : []
+          console.log('footprints',footprints)
           return this.sdgList.filter(v => v.footprints.find(f => footprints.indexOf(f.id)))
       }
   },
   mounted() {
+    // compute query filters
+    console.log('query filters', this.queryFilters)
     if(!this.footprintList.length) {
         this.axios
         .get('/footprints/')
         .then(response => {
             console.log('got goteo footprints', response)
             this.footprintList = response.data.items
+            this.loading++
         })
         .catch(error => {
             console.error('Goteo API error while fetching footprints', error)
@@ -113,10 +137,27 @@ export default {
         .then(response => {
             console.log('got goteo sdgs', response)
             this.sdgList = response.data.items
+            this.loading++
         })
         .catch(error => {
             console.error('Goteo API error while fetching SDGs', error)
         })
+    }
+  },
+  watch: {
+    loading() {
+        if(!this.loaded && this.sdgList.length && this.footprintList.length) {
+            this.filters.sdgs = []
+            this.filters.footprints = []
+            // build the filters object
+            if(Array.isArray(this.queryFilters.sdgs))
+                this.filters.sdgs = this.sdgList.filter(v => this.queryFilters.sdgs.indexOf(v.id)>-1)
+            if(Array.isArray(this.queryFilters.footprints))
+                this.filters.footprints = this.footprintList.filter(v => this.queryFilters.footprints.indexOf(v.id)>-1)
+            this.loaded = true
+            this.activeFootprints = this.filters.footprints.map(v => v.id)
+            console.log('watch filters',this.queryFilters,this.filters,this.sdgList,this.loaded)
+        }
     }
   }
 }
@@ -137,10 +178,25 @@ export default {
     border-radius:50%;
 }
 .image-footprint {
-    width: auto;
-    height: 48px;
+    width: 100%;
+    height: auto;
+    filter: gray; /* IE6-9 */
+    -webkit-filter: grayscale(1); /* Google Chrome, Safari 6+ & Opera 15+ */
+    filter: grayscale(1)
 }
-.btn.active {
-    background-color: rgb(43,157,155);
+
+.btn.active .image-footprint {
+  /* background-color: rgb(43,157,155); */
+  -webkit-filter: grayscale(0);
+  filter: none;
+}
+
+.col-2 {
+  flex-shrink: 1;
+  transition: all 400ms ease;
+}
+.col-6 {
+  flex-grow: 1;
+  transition: all 400ms ease;
 }
 </style>

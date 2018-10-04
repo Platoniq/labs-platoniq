@@ -3,6 +3,9 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import ApolloClient from "apollo-boost"
 import axios from 'axios'
+import { setupCache } from 'axios-cache-adapter'
+import localforage from 'localforage'
+import memoryDriver from 'localforage-memoryStorageDriver'
 import VueAxios from 'vue-axios'
 import VueApollo from "vue-apollo"
 import BootstrapVue from 'bootstrap-vue'
@@ -28,6 +31,26 @@ axios.defaults.auth = {
   username: conf.goteo.api_user,
   password: conf.goteo.api_key
 }
+const store = localforage.createInstance({
+  // List of drivers used
+  driver: [
+    localforage.INDEXEDDB,
+    localforage.LOCALSTORAGE,
+    memoryDriver
+  ],
+  // Prefix all storage keys to prevent conflicts
+  name: 'platoniq-labs'
+})
+
+axios.defaults.adapter = setupCache({
+  maxAge: (conf.cacheTtl || 8) * 60 * 1000,
+  exclude: { query: false },
+  key: req => {
+    let serialized = req.params instanceof URLSearchParams ? req.params.toString() : JSON.stringify(req.params) || ''
+    return req.url + serialized
+  },
+  store
+}).adapter
 
 Vue.use(VueAxios, axios)
 

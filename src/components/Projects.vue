@@ -4,7 +4,7 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :project-list="projects" :filters="filters" :to-query-string="true" v-on:filter="onFilter"></filters>
+      <filters :project-list="projects" :queryFilters="getQueryFilters" v-on:filter="onFilterPush"></filters>
 
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
@@ -41,7 +41,10 @@
           {{ item.name }}
         </template>
         <template slot="description" slot-scope="{item}">
-          <p class="text-muted">{{ item['description-short'] }}</p>
+          <p class="text-muted">{{ item['description-short'] }}
+
+          <br>Coords: <em>{{ item.latitude }}, {{ item.longitude }}</em>
+          </p>
         </template>
         <template slot="amount" slot-scope="{item}">
           {{ item.amount }} €
@@ -84,9 +87,9 @@ export default {
       percent:100,
       info:'',
       filters: {
-        projects:null,
-        footprints:null,
-        sdgs:null,
+        projects:[],
+        footprints:[],
+        sdgs:[],
         socialHeat: false,
       },
       fields: [
@@ -136,6 +139,7 @@ export default {
         this.loadProjects(this.filters)
     },
     loadProjects(filters) {
+      if(!this.map) return;
       this.projects = []
       this.invests = []
       this.$goteo.cancel() // Cancel any current loading
@@ -146,9 +150,9 @@ export default {
       let params = {location: center.lat + ',' + center.lng + ',' + distance}
       if(distance > 500) params = {}
       if(filters) {
-        if(filters.footprints)
+        if(filters.footprints && filters.footprints.length)
           params.footprint = filters.footprints.map(f => f.id)
-        if(filters.sdgs)
+        if(filters.sdgs && filters.sdgs.length)
           params.sdg = filters.sdgs.map(f => f.id)
       }
       console.log('load projects',params)
@@ -173,9 +177,27 @@ export default {
         )
 
     },
+    filtersToQuery(filters) {
+      let ret = {}
+      for(let i in filters) {
+        ret[i] = Array.isArray(filters[i]) ? filters[i].map(v => v.id) : filters[i]
+      }
+      return ret
+    },
+    onFilterPush(filters) {
+      // This does not redirect
+      this.$router.push({
+        name: this.$route.name,
+        query: {
+          filters: JSON.stringify(this.filtersToQuery(filters))
+          }
+        })
+      // apply filters
+      this.onFilter(filters)
+    },
     onFilter(filters) {
       this.filters = filters
-      console.log('filter', filters, filters.sdgs, filters.projects)
+      console.log('filter', filters, this.filtersToQuery(filters))
       this.$goteo.cancel('invest') // Cancel current loading requests
       this.percent = 100
       if(this.filters.projects && this.filters.projects.length)
@@ -201,6 +223,9 @@ export default {
     }
   },
   computed: {
+    getQueryFilters() {
+      return JSON.parse(this.$route.query.filters)
+    },
     projectLocations() {
       if(this.filters.projects && this.filters.projects.length)
         return this.filters.projects
@@ -216,10 +241,6 @@ export default {
       this.map = this.$refs.map.mapObject // work as expected
       // Check querystring
       this.loadProjects()
-      if(this.$route.query && this.$route.query.filters) {
-        this.onFilter( JSON.parse(this.$route.query.filters) )
-        console.log('query', this.$route.query, this.filters, this.filters.sdgs)
-      }
     })
   }
 }

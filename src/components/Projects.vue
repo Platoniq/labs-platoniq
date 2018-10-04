@@ -4,7 +4,7 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :project-list="projects" :queryFilters="getQueryFilters" v-on:filter="onFilterPush"></filters>
+      <filters :project-list="projects" :queryFilters="getQueryFilters" v-on:filter="onFilterPush" v-on:filter-list="onList"></filters>
 
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
@@ -42,9 +42,9 @@
         </template>
         <template slot="description" slot-scope="{item}">
           <p class="text-muted">{{ item['description-short'] }}
-
-          <br>Coords: <em>{{ item.latitude }}, {{ item.longitude }}</em>
           </p>
+          <img v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" class="icon-sdg">
+          <img v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" class="icon-footprint">
         </template>
         <template slot="amount" slot-scope="{item}">
           {{ item.amount }} €
@@ -84,6 +84,10 @@ export default {
       center: [41.5,-1],
       projects: [],
       invests: [],
+      social_commitments: {
+        sdgs: {},
+        footprints: {}
+      },
       percent:100,
       info:'',
       filters: {
@@ -205,6 +209,24 @@ export default {
       else
         this.loadProjects(this.filters)
     },
+    onList(type, list) {
+      list.forEach( it => {
+        if(!it.social_commitments || !it.social_commitments.length) return
+        it.social_commitments.forEach(s => {
+          this.social_commitments[type][s.id] = this.social_commitments[type][s.id] || []
+          if(this.social_commitments[type][s.id].find(v => v.id == s.id)) return
+          console.log('found it',type,s)
+          this.social_commitments[type][s.id].push(it)
+        })
+      })
+      console.log('onfilterlist', type,list, this.social_commitments[type])
+    },
+    getSdgsFromSocialCommitment(sid) {
+      return this.social_commitments.sdgs && this.social_commitments.sdgs[sid]
+    },
+    getFootprintsFromSocialCommitment(sid) {
+      return this.social_commitments.footprints && this.social_commitments.footprints[sid]
+    },
     getIcon(type, ob) {
       let ops ={
         iconSize: [38, 38]
@@ -224,7 +246,7 @@ export default {
   },
   computed: {
     getQueryFilters() {
-      return JSON.parse(this.$route.query.filters)
+      return this.$route.query.filters ? JSON.parse(this.$route.query.filters) : {}
     },
     projectLocations() {
       if(this.filters.projects && this.filters.projects.length)
@@ -250,5 +272,15 @@ export default {
 .progress-wrap {
   height:30px;
   padding:8px 0 11px;
+}
+.icon-sdg {
+    width: 32px;
+    height: 32px;
+    padding: 0 2px;
+}
+.icon-footprint {
+    width: auto;
+    height: 32px;
+    padding: 0 2px;
 }
 </style>

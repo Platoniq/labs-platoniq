@@ -126,6 +126,7 @@ export default {
             console.log('got goteo footprints', response)
             this.footprintList = response.data.items
             this.loading++
+            this.$emit('filter-list', 'footprints', this.footprintList)
         })
         .catch(error => {
             console.error('Goteo API error while fetching footprints', error)
@@ -138,6 +139,7 @@ export default {
             console.log('got goteo sdgs', response)
             this.sdgList = response.data.items
             this.loading++
+            this.$emit('filter-list', 'sdgs', this.sdgList)
         })
         .catch(error => {
             console.error('Goteo API error while fetching SDGs', error)

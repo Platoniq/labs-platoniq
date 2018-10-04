@@ -61,7 +61,12 @@ export default {
     return {
         footprintList: [],
         sdgList: [],
-        filters: {},
+        filters: {
+            projects: [],
+            sdgs: [],
+            footprints:[],
+            socialHeat: false
+        },
         loaded: false,
         loading:0,
         activeFootprints: []
@@ -112,7 +117,8 @@ export default {
   },
   mounted() {
     // compute query filters
-    console.log('query filters', this.queryFilters)
+    console.log('query filters', this.queryFilters, this.projectList, this.filters.projects)
+    // Load footprints from API
     if(!this.footprintList.length) {
         this.axios
         .get('/footprints/')
@@ -126,6 +132,7 @@ export default {
             console.error('Goteo API error while fetching footprints', error)
         })
     }
+    // Load sdgs
     if(!this.sdgList.length) {
         this.axios
         .get('/sdgs/')
@@ -141,6 +148,29 @@ export default {
     }
   },
   watch: {
+    '$route.query.filters'() {
+        console.log('change query string',this.$route.query)
+        // Load projects from props, rebuild the model
+        if(Array.isArray(this.queryFilters.projects)) {
+            this.filters.projects = []
+            this.queryFilters.projects.forEach(p => {
+                let prj = this.projectList.find(v => v.id == p)
+                if(prj) {
+                    this.filters.projects.push(prj)
+                    return
+                }
+                // // api search
+                // this.$goteo.getProjects({project:p}, r => {
+                //     if(r) {
+                //         console.log('fetch project', r, r.items[0])
+                //         this.projectList.push(r.items[0])
+                //         this.filters.projects.push(r.items[0])
+                //     }
+                // })
+            })
+        }
+        console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
+    },
     loading() {
         if(!this.loaded && this.sdgList.length && this.footprintList.length) {
             this.filters.sdgs = []

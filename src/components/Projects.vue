@@ -12,23 +12,26 @@
         </b-progress>
       </div>
 
-      <l-map ref="map" style="height: 500px" :zoom="zoom" :center="center" @move="mapMove">
-      <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
+      <l-map ref="map" style="height: 500px" :zoom="zoom" :center="center" :scroll-wheel-zoom="false" @move="mapMove">
+        <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
-      <l-marker-cluster :options="clusterOptionsProject">
-        <l-marker v-for="p in projectLocations" :key="p.id" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
-          <l-tooltip :content="p.name"></l-tooltip>
-        </l-marker>
-      </l-marker-cluster>
+        <l-circle :lat-lng="center" :radius="radius*1000" color="" fill-color="#988" :fill-opacity="0.10"></l-circle>
 
-      <l-marker-cluster :options="clusterOptionsPayment">
-        <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i)">
-          <l-tooltip :content="i.amount + '€'"></l-tooltip>
-        </l-marker>
-      </l-marker-cluster>
+        <l-marker-cluster :options="clusterOptionsProject">
+          <l-marker v-for="p in projectLocations" :key="p.id" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
+            <l-tooltip :content="p.name"></l-tooltip>
+          </l-marker>
+        </l-marker-cluster>
 
-      <LeafletHeatmap :lat-lngs="investLocations"></LeafletHeatmap>
-    </l-map>
+        <l-marker-cluster :options="clusterOptionsPayment">
+          <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i)">
+            <l-tooltip :content="i.amount + '€'"></l-tooltip>
+          </l-marker>
+        </l-marker-cluster>
+
+        <LeafletHeatmap :lat-lngs="investLocations"></LeafletHeatmap>
+
+      </l-map>
 
     <div class="text-muted">{{info}}</div>
 
@@ -67,7 +70,7 @@
 
 <script>
 import L from 'leaflet'
-import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet'
+import { LMap,LTileLayer,LCircle,LMarker,LPopup,LTooltip } from 'vue2-leaflet'
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 import Filters from './GoteoFilters.vue'
@@ -77,6 +80,7 @@ export default {
     LMap,
     LTileLayer,
     LMarker,
+    'l-circle': LCircle,
     LPopup,
     LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
@@ -87,6 +91,8 @@ export default {
     return {
       map: null,
       center: [41.5,-1],
+      zoom:7,
+      radius:50,
       projects: [],
       invests: [],
       social_commitments: {
@@ -96,9 +102,9 @@ export default {
       percent:100,
       info:'',
       filters: {
-        projects:[],
-        footprints:[],
-        sdgs:[],
+        projects: [],
+        footprints: [],
+        sdgs: [],
         socialHeat: false,
       },
       fields: [
@@ -133,9 +139,8 @@ export default {
           return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
         }
       },
-      zoom:7,
       url:'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
-      attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+      attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
     }
   },
   methods: {
@@ -146,25 +151,31 @@ export default {
       // console.log('move map',ev)
       if(!this.filters.projects || !this.filters.projects.length)
         this.loadProjects(this.filters)
+      // Set to query string, does not redirect
+      this.pushToRoute()
     },
     loadProjects(filters) {
       if(!this.map) return;
       this.projects = []
       this.invests = []
       this.$goteo.cancel() // Cancel any current loading
-      let center = this.map.getCenter();
-      let bounds = this.map.getBounds();
-      // let distance = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
-      let distance = Math.max(1,Math.round(center.distanceTo(bounds.getNorthWest()) / 1000))
-      let params = {location: center.lat + ',' + center.lng + ',' + distance}
-      if(distance > 500) params = {}
+      let center = this.map.getCenter()
+      let bounds = this.map.getBounds()
+      // Minimal radius:
+      this.radius = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
+      // Maximal radius
+      // this.radius = Math.max(1,Math.round(center.distanceTo(bounds.getNorthWest()) / 1000))
+      this.center = [center.lat, center.lng]
+      this.zoom = this.map.getZoom()
+      let params = {location: center.lat + ',' + center.lng + ',' + this.radius}
+      if(this.radius > 500) params = {}
       if(filters) {
         if(filters.footprints && filters.footprints.length)
-          params.footprint = filters.footprints.map(f => f.id)
+          params.footprint = filters.footprints
         if(filters.sdgs && filters.sdgs.length)
-          params.sdg = filters.sdgs.map(f => f.id)
+          params.sdg = filters.sdgs
       }
-      console.log('load projects',params)
+      console.log('load projects from filters',filters, 'params',params)
       this.$goteo
         .getProjects(params, data => {
             this.info = data.meta.total + ' Projects'
@@ -178,7 +189,7 @@ export default {
       this.invests = []
       console.log('load invests',projects)
       this.$goteo
-        .getInvests(projects.map(p => p.id), {}, data => {
+        .getInvests(projects, {}, data => {
             this.info = data.meta.total + ' Invests'
             this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
             return this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
@@ -186,27 +197,32 @@ export default {
         )
 
     },
-    filtersToQuery(filters) {
+    getFiltersIds(filters) {
       let ret = {}
       for(let i in filters) {
         ret[i] = Array.isArray(filters[i]) ? filters[i].map(v => v.id) : filters[i]
       }
       return ret
     },
-    onFilterPush(filters) {
-      // This does not redirect
+    pushToRoute() {
       this.$router.push({
         name: this.$route.name,
         query: {
-          filters: JSON.stringify(this.filtersToQuery(filters))
+          filters: JSON.stringify(this.filters),
+          center: JSON.stringify(this.center),
+          zoom: JSON.stringify(this.zoom)
           }
         })
+    },
+    onFilterPush(filters) {
       // apply filters
       this.onFilter(filters)
+      // Set to query string, does not redirect
+      this.pushToRoute()
     },
-    onFilter(filters) {
-      this.filters = filters
-      console.log('filter', filters, this.filtersToQuery(filters))
+    onFilter(obFilters) {
+      this.filters = this.getFiltersIds(obFilters)
+      console.log('filter', obFilters, this.filters)
       this.$goteo.cancel('invest') // Cancel current loading requests
       this.percent = 100
       if(this.filters.projects && this.filters.projects.length)
@@ -220,7 +236,6 @@ export default {
         it.social_commitments.forEach(s => {
           this.social_commitments[type][s.id] = this.social_commitments[type][s.id] || []
           if(this.social_commitments[type][s.id].find(v => v.id == s.id)) return
-          console.log('found it',type,s)
           this.social_commitments[type][s.id].push(it)
         })
       })
@@ -246,13 +261,20 @@ export default {
       return L.icon(ops)
     },
     gotoProject(p) {
-      console.log('goto project', p)
+      this.filters.projects = this.filters.projects || []
+      if(this.filters.projects.indexOf(p.id) > -1) return
+      this.filters.projects.push(p.id)
+      console.log('goto project', p, this.filters)
+      this.loadInvests(this.filters.projects)
+      // Set to query string, does not redirect
+      this.pushToRoute()
     }
   },
   computed: {
     projectLocations() {
+      console.log('project locations', this.filters.projects, this.projects.filter(p => this.filters.projects.indexOf(p.id) > -1 ), this.projects)
       if(this.filters.projects && this.filters.projects.length)
-        return this.filters.projects
+        return this.projects.filter(p => this.filters.projects.indexOf(p.id) > -1 )
       return this.projects
     },
     investLocations() {
@@ -260,11 +282,24 @@ export default {
     }
   },
   mounted() {
+    if(this.$route.query.filters) {
+      try{ this.filters = JSON.parse(this.$route.query.filters) } catch(e){}
+    }
+    if(this.$route.query.center) {
+      try{ this.center = JSON.parse(this.$route.query.center) } catch(e){}
+    }
+    if(this.$route.query.zoom) {
+      try{ this.zoom = JSON.parse(this.$route.query.zoom) } catch(e){}
+    }
+    console.log('mounted', 'center',this.center, 'zoom', this.zoom)
     // mapObject is not available directly in vue's mounted hook.
     this.$nextTick(() => {
       this.map = this.$refs.map.mapObject // work as expected
       // Check querystring
-      this.loadProjects()
+      this.loadProjects(this.filters)
+      if(this.filters.projects && this.filters.projects.length)
+        this.loadInvests(this.filters.projects)
+
     })
   }
 }

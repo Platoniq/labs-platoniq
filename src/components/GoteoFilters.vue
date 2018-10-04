@@ -48,15 +48,6 @@ export default {
         type: Array,
         default: () => []
     },
-    queryFilters: {
-        type: Object,
-        default: () => ({
-            projects: [], // selected projects
-            footprints: [], // selected footprints
-            sdgs: [], // selected sdgs
-            socialHeat: false,
-        })
-    },
     emitEvent: {
         type: String,
         default: 'filter'
@@ -114,6 +105,9 @@ export default {
           let footprints = this.hasFootprints ? this.filters.footprints.map(f => f.id) : []
           console.log('footprints',footprints)
           return this.sdgList.filter(v => v.footprints.find(f => footprints.indexOf(f.id)))
+      },
+      queryFilters() {
+        return this.$route.query.filters ? JSON.parse(this.$route.query.filters) : {}
       }
   },
   mounted() {
@@ -158,7 +152,12 @@ export default {
                 this.filters.footprints = this.footprintList.filter(v => this.queryFilters.footprints.indexOf(v.id)>-1)
             this.loaded = true
             this.activeFootprints = this.filters.footprints.map(v => v.id)
-            console.log('watch filters',this.queryFilters,this.filters,this.sdgList,this.loaded)
+            if(this.filters.sdgs.length || this.filters.footprints.length) {
+                if(this.emitEvent) {
+                    this.$emit(this.emitEvent, this.filters)
+                    console.log('watch filters',this.queryFilters,this.filters,this.sdgList,this.loaded)
+                }
+            }
         }
     }
   }

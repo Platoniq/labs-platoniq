@@ -4,7 +4,7 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :project-list="projects" :queryFilters="getQueryFilters" v-on:filter="onFilterPush" v-on:filter-list="onList"></filters>
+      <filters :project-list="projects" v-on:filter="onFilterPush" v-on:filter-list="onList"></filters>
 
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
@@ -41,10 +41,15 @@
           {{ item.name }}
         </template>
         <template slot="description" slot-scope="{item}">
-          <p class="text-muted">{{ item['description-short'] }}
-          </p>
-          <img v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" class="icon-sdg">
-          <img v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" class="icon-footprint">
+          <p class="text-muted">{{ item['description-short'] }}</p>
+          <b-row>
+            <b-col cols="7">
+              <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
+            </b-col>
+            <b-col>
+              <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
+            </b-col>
+          </b-row>
         </template>
         <template slot="amount" slot-scope="{item}">
           {{ item.amount }} €
@@ -245,9 +250,6 @@ export default {
     }
   },
   computed: {
-    getQueryFilters() {
-      return this.$route.query.filters ? JSON.parse(this.$route.query.filters) : {}
-    },
     projectLocations() {
       if(this.filters.projects && this.filters.projects.length)
         return this.filters.projects
@@ -276,11 +278,11 @@ export default {
 .icon-sdg {
     width: 32px;
     height: 32px;
-    padding: 0 2px;
+    margin: 0 2px 2px 0;
 }
 .icon-footprint {
     width: auto;
     height: 32px;
-    padding: 0 2px;
+    margin: 0 2px 2px 0;
 }
 </style>

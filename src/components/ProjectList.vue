@@ -18,7 +18,8 @@
       {{ item.amount }} €
   </template>
   <template slot="links" slot-scope="{item}">
-      <a :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></a>
+      <b-btn title="Goto project page" :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></b-btn>
+      <b-btn :title="inFilters(item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" :to="toggleRouteForProject(item)" exact :pressed="inFilters(item)"><v-icon alt="Show invests" name="donate"></v-icon></b-btn>
   </template>
   </b-table>
 
@@ -88,7 +89,37 @@ export default {
       })
       console.log('onfilterlist', type,list, this.social_commitments[type])
     },
+    getFilters() {
+      let filters = {}
+      try { filters = JSON.parse(this.$route.query.filters) } catch(e){}
+      filters.projects = Array.isArray(filters.projects) ? filters.projects : []
+      return filters
+    },
+    inFilters(item) {
+      return this.getFilters().projects.indexOf(item.id) > -1
+    },
+    toggleRouteForProject(p) {
+      let filters = this.getFilters()
+      let center = []
+      const zoom = this.$route.query.zoom
+      const pos = filters.projects.indexOf(p.id)
+      if(pos > -1) filters.projects.splice(pos, 1)
+      else filters.projects.push(p.id)
+      try { center = JSON.parse(this.$route.query.center) } catch(e){}
 
+      return {
+        name: this.$route.name,
+        query: {filters: JSON.stringify(filters), zoom: zoom, center: JSON.stringify(center)}
+      }
+    }
+  },
+  watch: {
+    sdgs() {
+      this.onList('sdgs', this.sdgs)
+    },
+    footprints() {
+      this.onList('footprints', this.footprints)
+    }
   }
 }
 

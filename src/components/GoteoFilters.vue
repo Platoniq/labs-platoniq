@@ -4,7 +4,7 @@
         <b-col class="filter-footprints">
 
             <b-row>
-                <b-button class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="activeFootprints.indexOf(f.id)>-1"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-button>
+                <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
             </b-row>
 
             <!-- <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
@@ -13,13 +13,14 @@
             </multiselect> -->
         </b-col>
         <b-col :cols="hasFootprints ? 6 : 2" class="filter-sdgs">
+
             <multiselect v-if="hasFootprints" v-model="filters.sdgs" :options="filteredSdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
 
-            <p v-else-if="loaded" class="text-muted"><em>Filter by footprints</em></p>
-            <v-icon v-else name="sync" spin/>
+            <p v-else class="text-muted"><em>Filter by footprints</em></p>
+
         </b-col>
     </b-row>
     <b-row>
@@ -48,6 +49,14 @@ export default {
         type: Array,
         default: () => []
     },
+    sdgList: {
+        type: Array,
+        default: () => []
+    },
+    footprintList: {
+        type: Array,
+        default: () => []
+    },
     emitEvent: {
         type: String,
         default: 'filter'
@@ -59,68 +68,83 @@ export default {
   },
   data() {
     return {
-        footprintList: [],
-        sdgList: [],
         filters: {
             projects: [],
             sdgs: [],
             footprints:[],
             socialHeat: false
-        },
-        loaded: false,
-        loading:0,
-        activeFootprints: []
+        }
     }
   },
   methods: {
-      onChange(filter, f) {
-          console.log('onchange', filter, 'event:',this.emitEvent, 'loaded:',this.loaded, this.filters)
-          if(filter==='footprint') {
-              this.filters.footprints = this.toggle(this.filters.footprints, f)
-              this.activeFootprints = this.filters.footprints.map(v => v.id)
-          }
-          if(this.emitEvent && this.loaded) this.$emit(this.emitEvent, this.filters)
-      },
-      toggle(list, el) {
-        console.log('toggle',list,el)
-        if(!Array.isArray(list)) list = []
-        if(list.find(v => v.id==el.id))
-            list = list.filter(v => v.id!=el.id)
-        else
-            list.push(el)
-        return list
-      },
-      hasFootprint(f) {
-        console.log('has footprint', f, this.filters.footprints)
-        return this.hasFootprints && !!this.filters.footprints.find(v => v.id==f.id)
-      },
-      setActiveProjects() {
-          // Load projects from props, rebuild the model
-        if(Array.isArray(this.queryFilters.projects)) {
-            this.filters.projects = []
-            this.queryFilters.projects.forEach(p => {
-                let prj = this.projectList.find(v => v.id == p)
-                if(prj) {
-                    this.filters.projects.push(prj)
-                    return
-                }
-                // // api search
-                // this.$goteo.getProjects({project:p}, r => {
-                //     if(r) {
-                //         console.log('fetch project', r, r.items[0])
-                //         this.projectList.push(r.items[0])
-                //         this.filters.projects.push(r.items[0])
-                //     }
-                // })
-            })
+    onChange(filter, f) {
+      if(filter==='footprint') {
+        this.filters.footprints = this.toggle(this.filters.footprints, f)
         }
-        console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
+        console.log('onchange', filter, 'event:',this.emitEvent, 'filters', this.filters)
+        if(this.emitEvent) this.$emit(this.emitEvent, this.filters)
+    },
+    toggle(list, el) {
+      if(!Array.isArray(list)) list = []
+      if(list.find(v => v.id==el.id))
+          list = list.filter(v => v.id!=el.id)
+      else
+          list.push(el)
+      return list
+    },
+    hasFootprint(f) {
+      return this.hasFootprints && !!this.filters.footprints.find(v => v.id==f.id)
+    },
+    setActiveFilters() {
+      this.filters.socialHeat = !!this.queryFilters.socialHeat
+      // Load projects from props, rebuild the model
+      if(Array.isArray(this.queryFilters.projects) && this.queryFilters.projects.length != this.filters.projects.length) {
+        this.filters.projects = []
+        this.queryFilters.projects.forEach(p => {
+          let it = this.projectList.find(v => v.id == p)
+          if(it) {
+              this.filters.projects.push(it)
+              return
+          }
+          // // api search
+          // this.$goteo.getProjects({project:p}, r => {
+          //     if(r) {
+          //         console.log('fetch project', r, r.items[0])
+          //         this.projectList.push(r.items[0])
+          //         this.filters.projects.push(r.items[0])
+          //     }
+          // })
+        })
       }
+      console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
+      // Load footprints from props, rebuild the model
+      if(Array.isArray(this.queryFilters.footprints) && this.queryFilters.footprints.length != this.filters.footprints.length) {
+        this.filters.footprints = []
+        this.queryFilters.footprints.forEach(p => {
+          let it = this.footprintList.find(v => v.id == p)
+          if(it) {
+              this.filters.footprints.push(it)
+              return
+          }
+        })
+      }
+      // Load sdgs from props, rebuild the model
+      if(Array.isArray(this.queryFilters.sdgs) && this.queryFilters.sdgs.length != this.filters.sdgs.length) {
+        this.filters.sdgs = []
+        this.queryFilters.sdgs.forEach(p => {
+            let it = this.sdgList.find(v => v.id == p)
+            if(it) {
+                this.filters.sdgs.push(it)
+                return
+            }
+        })
+      }
+    }
   },
   computed: {
       hasFootprints() {
-        //   return this.filters.footprints && this.filters.footprints.length
-          return this.activeFootprints.length > 0
+          return this.filters.footprints && this.filters.footprints.length
+        //   return this.activeFootprints.length > 0
       },
       hasSdgs() {
           return this.filters.sdgs && this.filters.sdgs.length
@@ -138,65 +162,26 @@ export default {
       }
   },
   mounted() {
-    this.setActiveProjects()
+    this.setActiveFilters()
     // compute query filters
     console.log('query filters', this.queryFilters, this.projectList, this.filters.projects)
-    // Load footprints from API
-    if(!this.footprintList.length) {
-        this.axios
-        .get('/footprints/')
-        .then(response => {
-            console.log('got goteo footprints', response)
-            this.footprintList = response.data.items
-            this.loading++
-            this.$emit('filter-list', 'footprints', this.footprintList)
-        })
-        .catch(error => {
-            console.error('Goteo API error while fetching footprints', error)
-        })
-    }
-    // Load sdgs
-    if(!this.sdgList.length) {
-        this.axios
-        .get('/sdgs/')
-        .then(response => {
-            console.log('got goteo sdgs', response)
-            this.sdgList = response.data.items
-            this.loading++
-            this.$emit('filter-list', 'sdgs', this.sdgList)
-        })
-        .catch(error => {
-            console.error('Goteo API error while fetching SDGs', error)
-        })
-    }
   },
   watch: {
     '$route.query.filters'() {
         console.log('change query string',this.$route.query)
-        this.setActiveProjects()
+        this.setActiveFilters()
     },
     projectList() {
         console.log('change projectList',this.projectList)
-        this.setActiveProjects()
+        this.setActiveFilters()
     },
-    loading() {
-        if(!this.loaded && this.sdgList.length && this.footprintList.length) {
-            this.filters.sdgs = []
-            this.filters.footprints = []
-            // build the filters object
-            if(Array.isArray(this.queryFilters.sdgs))
-                this.filters.sdgs = this.sdgList.filter(v => this.queryFilters.sdgs.indexOf(v.id)>-1)
-            if(Array.isArray(this.queryFilters.footprints))
-                this.filters.footprints = this.footprintList.filter(v => this.queryFilters.footprints.indexOf(v.id)>-1)
-            this.loaded = true
-            this.activeFootprints = this.filters.footprints.map(v => v.id)
-            if(this.filters.sdgs.length || this.filters.footprints.length) {
-                if(this.emitEvent) {
-                    this.$emit(this.emitEvent, this.filters)
-                    console.log('watch filters',this.queryFilters,this.filters,this.sdgList,this.loaded)
-                }
-            }
-        }
+    footprintList() {
+        console.log('change footprintList',this.footprintList)
+        this.setActiveFilters()
+    },
+    sdgList() {
+        console.log('change sdgList',this.sdgList)
+        this.setActiveFilters()
     }
   }
 }

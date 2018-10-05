@@ -4,7 +4,7 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :project-list="projects" v-on:filter="onFilterPush" v-on:filter-list="onList"></filters>
+      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush"></filters>
 
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
@@ -136,10 +136,12 @@ export default {
       let params = {location: center.lat + ',' + center.lng + ',' + this.radius}
       if(this.radius > 500) params = {}
       if(filters) {
-        if(filters.footprints && filters.footprints.length)
+        if(filters.footprints && filters.footprints.length) {
           params.footprint = filters.footprints
-        if(filters.sdgs && filters.sdgs.length)
-          params.sdg = filters.sdgs
+          // Sdgs only if footprints
+          if(filters.sdgs && filters.sdgs.length)
+            params.sdg = filters.sdgs
+        }
       }
       console.log('load projects from filters',filters, 'params',params)
       this.$goteo
@@ -251,10 +253,36 @@ export default {
     }
   },
   mounted() {
+    // Load footprints from API
+    if(!this.footprints.length) {
+        this.axios
+        .get('/footprints/')
+        .then(response => {
+          this.footprints = response.data.items
+            console.log('got goteo footprints', response, this.footprints)
+            // this.loading++
+        })
+        .catch(error => {
+            console.error('Goteo API error while fetching footprints', error)
+        })
+    }
+    // Load sdgs
+    if(!this.footprints.length) {
+        this.axios
+        .get('/sdgs/')
+        .then(response => {
+            console.log('got goteo sdgs', response)
+            this.sdgs = response.data.items
+            // this.loading++
+        })
+        .catch(error => {
+            console.error('Goteo API error while fetching SDGs', error)
+        })
+    }
     // mapObject is not available directly in vue's mounted hook.
     this.$nextTick(() => {
       this.map = this.$refs.map.mapObject // work as expected
-      console.log('mounted', 'center',this.center, 'zoom', this.zoom)
+      console.log('mounted', 'center',this.center, 'zoom', this.zoom, 'filters', this.filters)
       // Check querystring
       this.loadProjects(this.filters)
       if(this.filters.projects && this.filters.projects.length)

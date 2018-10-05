@@ -1,4 +1,3 @@
-<script>
 import L from 'leaflet'
 
 export default {
@@ -35,10 +34,12 @@ export default {
       let ops ={
         iconSize: [38, 38]
       }
-      // if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
       if(type === 'project') {
-        ops.iconUrl = ob['image-url']
-        ops.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive image-project'
+        if(ob) {
+          ops.iconUrl = ob['image-url']
+          ops.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive image-project'
+        }
+        else ops.iconUrl = 'static/img/pin-project.svg'
       }
       if(type === 'signature') ops.iconUrl = 'static/img/pin-signature.svg'
 
@@ -51,4 +52,3 @@ export default {
   }
 
 }
-</script>

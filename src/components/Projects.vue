@@ -59,8 +59,8 @@ import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
-import Footprints from '../mixins/Footprints.vue'
-import MapUtils from '../mixins/MapUtils.vue'
+import Footprints from '../mixins/Footprints'
+import MapUtils from '../mixins/MapUtils'
 
 export default {
   components: {
@@ -85,10 +85,7 @@ export default {
       projects: [],
       invests: [],
       percent: 100,
-      info:{
-        numProjects: null,
-        numInvests: null
-      },
+      info:{},
       filters: {
         projects: [],
         footprints: [],
@@ -185,9 +182,6 @@ export default {
       else
         this.loadProjects(this.filters)
     },
-    onList(type, list) {
-      this[type] = list
-    },
     gotoProject(p) {
       this.filters.projects = this.filters.projects || []
       if(this.filters.projects.indexOf(p.id) > -1) return
@@ -241,8 +235,4 @@ export default {
 </script>
 
 <style>
-.progress-wrap {
-  height:30px;
-  padding:8px 0 11px;
-}
 </style>

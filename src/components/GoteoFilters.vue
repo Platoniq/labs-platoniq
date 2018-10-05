@@ -23,7 +23,7 @@
 
         </b-col>
     </b-row>
-    <b-row>
+    <b-row v-if="withProjects">
         <b-col class="filter-projects">
             <multiselect v-model="filters.projects" :options="projectList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Show invests for some projects">
                 <template slot="tag" slot-scope="{option,remove}"><span class="multiselect__tag"><span><img :src="option['image-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)"  @mousedown.prevent="remove(option)"></i></span></template>
@@ -64,6 +64,10 @@ export default {
     emitEvent: {
         type: String,
         default: 'filter'
+    },
+    withProjects: {
+        type: Boolean,
+        default: true
     }
   },
   components: {

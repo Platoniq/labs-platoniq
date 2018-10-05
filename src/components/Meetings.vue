@@ -1,8 +1,9 @@
 <template>
   <div>
 
-    <v-icon v-if="isLoading()" name="sync" spin/>
     <div v-if="!components.length && !isLoading('meetings')" class="alert alert-warning">Sorry, no meetings in this component</div>
+
+    <filters v-else :with-projects="false" :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading="loading"></filters>
 
     <div v-for="component in components" :key="component.id">
       <b-row>
@@ -35,7 +36,15 @@
           </b-table>
 
           <div v-else>
-             <p v-if="project"><input type="checkbox" v-model="socialHeat"> Social Heat (instead of Amount Heat) </p>
+            <p v-if="project">
+               <switches v-model="filters.socialHeat" @input="onChange" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
+            </p>
+
+            <div class="progress-wrap">
+              <b-progress v-if="percent<100" :max="100" animated variant="info">
+                <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
+              </b-progress>
+            </div>
 
              <l-map ref="map" style="height: 500px" :options="{scrollWheelZoom:false}" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
@@ -60,12 +69,13 @@
 
               <LeafletHeatmap v-if="project" :lat-lngs="investLocations"></LeafletHeatmap>
             </l-map>
-          </div>
 
-          <div class="text-muted">{{info}}</div>
-          <b-progress v-if="percent<100" :max="100" animated>
-            <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
-          </b-progress>
+            <div class="text-muted">
+              <b-badge v-if="info.projects" variant="info">{{info.projects.total}} Projects - {{projects.reduce((c,p) => c + p.amount, 0)}} €</b-badge>
+              <b-badge v-if="invests.length && info.invests" variant="secondary">{{info.invests.total}} Invests - {{invests.reduce((c,i) => c + i.amount, 0)}} €</b-badge>
+            </div>
+
+          </div>
 
           <h5>Goteo projects:</h5>
           <!-- <div>
@@ -85,10 +95,11 @@ import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 // import Vue2LeafletHeatmap from 'vue2-leaflet-heatmap'
-import Footprints from '../mixins/Footprints.vue'
+import Switches from 'vue-switches'
+import Footprints from '../mixins/Footprints'
+import MapUtils from '../mixins/MapUtils'
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
-import MapUtils from '../mixins/MapUtils.vue'
 
 import gql from 'graphql-tag'
 
@@ -143,6 +154,7 @@ export default {
     LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
     LeafletHeatmap,
+    Switches,
     Filters,
     ProjectList
   },
@@ -171,14 +183,8 @@ export default {
             })
           )
           this.bounds = new L.LatLngBounds(this.markers.map(m => m.coords));
-          let distance = Math.max(2, Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000))
           // Query goteo, all projects
-
-          this.projects = []
-          this.$goteo
-            .getProjects({location: this.bounds.getCenter().lat + ',' + this.bounds.getCenter().lng + ',' + distance}, data =>
-              this.projects = [...this.projects, ...data.items]
-            )
+          this.loadProjects()
         }
 
       },
@@ -194,15 +200,20 @@ export default {
   },
   data() {
     return {
-      info: '',
       result: {},
       projects:[],
       invests:[],
-      socialHeat: false,
       markers: [],
       initiative: {},
-      percent: 0,
+      percent: 100,
       components: {},
+      filters: {
+        // projects: [],
+        footprints: [],
+        sdgs: [],
+        socialHeat: false,
+      },
+      info:{},
       fields: [
           {
             key: 'id',
@@ -235,7 +246,7 @@ export default {
       return this.invests.reduce((prev, curr) => curr.amount + prev, 0)
     },
     investLocations() {
-      return this.invests.map((i) => [i.latitude, i.longitude, this.socialHeat ? 10 : i.amount])
+      return this.invests.map((i) => [i.latitude, i.longitude, this.filters.socialHeat ? 10 : i.amount])
     }
   },
   methods: {
@@ -251,26 +262,80 @@ export default {
       console.log('goto',this.id,p.id)
       this.$router.push({name:'decidim-initiatives', params: {id: this.id, view:'map', project: p.id}})
     },
-    filterInvests(data) {
-      console.log('inc invests', data,this.$refs.paymentCluster)
-      this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
-      this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
-      // this.$refs.paymentCluster[0].mapObject.refreshClusters()
+    pushToRoute() {
+      this.$router.push({
+        name: this.$route.name,
+        query: {
+          filters: JSON.stringify(this.filters)
+          }
+        })
+    },
+    getFiltersIds(filters) {
+      let ret = {}
+      for(let i in filters) {
+        ret[i] = Array.isArray(filters[i]) ? filters[i].map(v => v.id) : filters[i]
+      }
+      return ret
+    },
+    onFilterPush(filters) {
+      // apply filters
+      this.onFilter(filters)
+      // Set to query string, does not redirect
+      // this.pushToRoute()
+    },
+    onFilter(obFilters) {
+      this.filters = this.getFiltersIds(obFilters)
+      console.log('filter', obFilters, this.filters)
+      this.loadProjects()
+    },
+    loadProjects(filters) {
+      let radius = Math.max(2, Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000))
+      let params = {location: this.bounds.getCenter().lat + ',' + this.bounds.getCenter().lng + ',' + radius};
+      this.projects = []
+
+      if(filters) {
+        if(filters.footprints && filters.footprints.length) {
+          params.footprint = filters.footprints
+          // Sdgs only if footprints
+          if(filters.sdgs && filters.sdgs.length)
+            params.sdg = filters.sdgs
+        }
+      }
+      this.addLoading('projects')
+      this.$goteo
+        .getProjects(params, data => {
+          this.info.projects = data.meta
+          this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
+          if(this.percent>=100) this.removeLoading('projects')
+          this.projects = [...this.projects, ...data.items]
+        })
+    },
+    loadInvests() {
+      this.addLoading('invests')
+      this.$goteo.getInvests(this.project,{}, data => {
+        console.log('inc invests', data,this.$refs.paymentCluster)
+        this.info.invests = data.meta
+        this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
+        this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
+        if(this.percent>=100) this.removeLoading('invests')
+      })
     }
+
   },
   watch: {
     project() {
       // / Query goteo, project (if selected)
       this.invests = [];
+      this.removeLoading('invests')
       if(this.project) {
-        this.$goteo.getInvests(this.project,{},this.filterInvests)
+        this.loadInvests()
       }
     }
   },
   mounted() {
     console.log('mounted', this.project)
     if(this.project) {
-      this.$goteo.getInvests(this.project,{},this.filterInvests)
+      this.loadInvests()
     }
   }
 }

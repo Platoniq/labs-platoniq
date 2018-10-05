@@ -86,4 +86,9 @@ canvas.leaflet-heatmap-layer {
 img.image-project {
   border-radius: 50%;
 }
+.progress-wrap {
+  height:30px;
+  padding:8px 0 11px;
+}
+
 </style>

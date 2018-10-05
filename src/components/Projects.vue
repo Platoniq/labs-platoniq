@@ -4,7 +4,7 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading=loading></filters>
+      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading="loading"></filters>
 
       <em v-if="invests.length" class="text-danger"><v-icon name="hand-point-right"></v-icon> Moving the map won't update projects list while heat map is active</em>
       <div class="progress-wrap">
@@ -41,7 +41,7 @@
 
       <hr>
 
-      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading=loading></project-list>
+      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading="loading"></project-list>
 
     <div>
 
@@ -59,6 +59,8 @@ import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
+import Footprints from '../mixins/Footprints.vue'
+import MapUtils from '../mixins/MapUtils.vue'
 
 export default {
   components: {
@@ -73,6 +75,7 @@ export default {
     'filters': Filters,
     'project-list': ProjectList
   },
+  mixins: [Footprints, MapUtils],
   data() {
     return {
       map: null,
@@ -81,9 +84,6 @@ export default {
       radius: 50,
       projects: [],
       invests: [],
-      footprints: [],
-      sdgs: [],
-      loading: [],
       percent: 100,
       info:{
         numProjects: null,
@@ -95,20 +95,6 @@ export default {
         sdgs: [],
         socialHeat: false,
       },
-      clusterOptionsProject: {
-        iconCreateFunction(cluster) {
-          let n = cluster.getChildCount()
-          return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-project', iconSize: L.point(40, 40) });
-        }
-      },
-      clusterOptionsPayment: {
-        iconCreateFunction(cluster) {
-          let n = cluster.getAllChildMarkers().reduce((acc,curr) => acc + parseInt(curr && curr.options && curr.options.alt) || 0, 0)
-          return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
-        }
-      },
-      url:'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
-      attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
     }
   },
   methods: {
@@ -202,19 +188,6 @@ export default {
     onList(type, list) {
       this[type] = list
     },
-    getIcon(type, ob) {
-      let ops ={
-        iconSize: [38, 38]
-      }
-      if(type === 'project') {
-        ops.iconUrl = ob['image-url']
-        ops.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive image-project'
-      }
-      if(type === 'euro') {
-        return L.divIcon({ html: '<div><span>' + ob.amount +'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
-      }
-      return L.icon(ops)
-    },
     gotoProject(p) {
       this.filters.projects = this.filters.projects || []
       if(this.filters.projects.indexOf(p.id) > -1) return
@@ -223,14 +196,6 @@ export default {
       this.loadInvests(this.filters.projects)
       // Set to query string, does not redirect
       this.pushToRoute()
-    },
-    addLoading(type) {
-      if(this.loading.indexOf(type) == -1)
-        this.loading.push(type)
-    },
-    removeLoading(type) {
-      const pos = this.loading.indexOf(type)
-      if(pos > -1) this.loading.splice(pos, 1)
     }
   },
   computed: {
@@ -262,36 +227,6 @@ export default {
     }
   },
   mounted() {
-    // Load footprints from API
-    if(!this.footprints.length) {
-      this.addLoading('footprints')
-      this.axios
-      .get('/footprints/')
-      .then(response => {
-        this.footprints = response.data.items
-        this.removeLoading('footprints')
-        console.log('got goteo footprints', response, this.footprints)
-      })
-      .catch(error => {
-        this.removeLoading('footprints')
-        console.error('Goteo API error while fetching footprints', error)
-      })
-    }
-    // Load sdgs
-    if(!this.sdgs.length) {
-      this.addLoading('sdgs')
-      this.axios
-      .get('/sdgs/')
-      .then(response => {
-        console.log('got goteo sdgs', response)
-        this.sdgs = response.data.items
-        this.removeLoading('sdgs')
-      })
-      .catch(error => {
-        this.removeLoading('sdgs')
-        console.error('Goteo API error while fetching SDGs', error)
-      })
-    }
     // mapObject is not available directly in vue's mounted hook.
     this.$nextTick(() => {
       this.map = this.$refs.map.mapObject // work as expected

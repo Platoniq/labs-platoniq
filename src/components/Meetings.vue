@@ -1,8 +1,8 @@
 <template>
   <div>
 
-    <v-icon v-if="loading" name="sync" spin/>
-    <div v-if="!components.length && !loading" class="alert alert-warning">Sorry, no meetings in this component</div>
+    <v-icon v-if="isLoading()" name="sync" spin/>
+    <div v-if="!components.length && !isLoading('meetings')" class="alert alert-warning">Sorry, no meetings in this component</div>
 
     <div v-for="component in components" :key="component.id">
       <b-row>
@@ -37,7 +37,7 @@
           <div v-else>
              <p v-if="project"><input type="checkbox" v-model="socialHeat"> Social Heat (instead of Amount Heat) </p>
 
-             <l-map ref="map" style="height: 500px" :zoom="zoom" :bounds="bounds">
+             <l-map ref="map" style="height: 500px" :options="{scrollWheelZoom:false}" :zoom="zoom" :bounds="bounds">
               <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
               <l-marker-cluster :options="clusterOptionsSignature">
@@ -47,7 +47,7 @@
               </l-marker-cluster>
 
               <l-marker-cluster :options="clusterOptionsProject">
-                <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project')">
+                <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project', p)">
                   <l-tooltip :content="p.name"></l-tooltip>
                 </l-marker>
               </l-marker-cluster>
@@ -68,9 +68,12 @@
           </b-progress>
 
           <h5>Goteo projects:</h5>
-          <div>
+          <!-- <div>
             <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'decidim-initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
-          </div>
+          </div> -->
+
+          <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading="loading"></project-list>
+
       </div>
     </div>
   </div>
@@ -82,6 +85,10 @@ import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 // import Vue2LeafletHeatmap from 'vue2-leaflet-heatmap'
+import Footprints from '../mixins/Footprints.vue'
+import Filters from './GoteoFilters.vue'
+import ProjectList from './ProjectList.vue'
+import MapUtils from '../mixins/MapUtils.vue'
 
 import gql from 'graphql-tag'
 
@@ -135,8 +142,11 @@ export default {
     LPopup,
     LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
-    LeafletHeatmap
+    LeafletHeatmap,
+    Filters,
+    ProjectList
   },
+  mixins: [Footprints, MapUtils],
   apollo: {
     initiative: {
       query,
@@ -176,7 +186,8 @@ export default {
         console.error('We\'ve got an error!', error)
       },
       watchLoading(isLoading, countModifier) {
-        this.loading = isLoading
+        if(isLoading) this.addLoading('meetings')
+        else this.removeLoading('meetings')
         this.$emit('data-loading', isLoading)
       }
     }
@@ -192,26 +203,6 @@ export default {
       initiative: {},
       percent: 0,
       components: {},
-      clusterOptionsSignature: {
-        disableClusteringAtZoom: 17,
-        iconCreateFunction(cluster) {
-          let n = cluster.getChildCount()
-          return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-signature', iconSize: L.point(40, 40) });
-        }
-      },
-      clusterOptionsProject: {
-        iconCreateFunction(cluster) {
-          let n = cluster.getChildCount()
-          return L.divIcon({ html: '<div><span>'+n+'</span></div>', className: 'marker-cluster marker-cluster-project', iconSize: L.point(40, 40) });
-        }
-      },
-      clusterOptionsPayment: {
-        iconCreateFunction(cluster) {
-          let n = cluster.getAllChildMarkers().reduce((acc,curr) => acc + parseInt(curr && curr.options && curr.options.alt) || 0, 0)
-          return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
-        }
-      },
-      loading: false,
       fields: [
           {
             key: 'id',
@@ -233,9 +224,7 @@ export default {
             sortable: true
           }
       ],
-      zoom:13,
-      url:'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
-      attribution:'&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
+      zoom:13
     }
   },
   computed: {
@@ -257,18 +246,6 @@ export default {
       if(status === 'in_campaign') return 'warning'
 
       return 'default';
-    },
-    getIcon(type, n) {
-      let ops ={
-        iconSize: [38, 38]
-      }
-      if(type === 'signature') ops.iconUrl = 'static/img/pin-signature.svg'
-      if(type === 'project') ops.iconUrl = 'static/img/pin-project.svg'
-      // if(type === 'euro') ops.iconUrl = 'static/img/pin-payment.svg'
-      if(type === 'euro') {
-        return L.divIcon({ html: '<div><span>'+n+'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
-      }
-      return L.icon(ops)
     },
     gotoProject(p) {
       console.log('goto',this.id,p.id)

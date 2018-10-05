@@ -33,34 +33,17 @@
 
       </l-map>
 
-    <div class="text-muted">{{info}}</div>
+      <div class="text-muted">
+        <b-badge v-if="info.projects" variant="info">{{info.projects.total}} Projects - {{projects.reduce((c,p) => c + p.amount, 0)}} €</b-badge>
+        <b-badge v-if="invests.length && info.invests" variant="secondary">{{info.invests.total}} Invests - {{invests.reduce((c,i) => c + i.amount, 0)}} €</b-badge>
+      </div>
 
-    <hr>
+      <hr>
+
+      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" ></project-list>
 
     <div>
 
-      <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
-        <template slot="name" slot-scope="{item}">
-          {{ item.name }}
-        </template>
-        <template slot="description" slot-scope="{item}">
-          <p class="text-muted">{{ item['description-short'] }}</p>
-          <b-row>
-            <b-col cols="7">
-              <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
-            </b-col>
-            <b-col>
-              <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
-            </b-col>
-          </b-row>
-        </template>
-        <template slot="amount" slot-scope="{item}">
-          {{ item.amount }} €
-        </template>
-        <template slot="links" slot-scope="{item}">
-          <a :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></a>
-        </template>
-      </b-table>
 
     </div>
 
@@ -74,6 +57,7 @@ import { LMap,LTileLayer,LCircle,LMarker,LPopup,LTooltip } from 'vue2-leaflet'
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 import Filters from './GoteoFilters.vue'
+import ProjectList from './ProjectList.vue'
 
 export default {
   components: {
@@ -85,7 +69,8 @@ export default {
     LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
     LeafletHeatmap,
-    'filters': Filters
+    'filters': Filters,
+    'project-list': ProjectList
   },
   data() {
     return {
@@ -95,38 +80,19 @@ export default {
       radius:50,
       projects: [],
       invests: [],
-      social_commitments: {
-        sdgs: {},
-        footprints: {}
-      },
+      footprints: [],
+      sdgs:[],
       percent:100,
-      info:'',
+      info:{
+        numProjects: null,
+        numInvests: null
+      },
       filters: {
         projects: [],
         footprints: [],
         sdgs: [],
         socialHeat: false,
       },
-      fields: [
-        {
-          key: 'name',
-          label: 'Name',
-          sortable: true
-        },
-        {
-          key: 'description',
-          label: 'Description'
-        },
-        {
-          key: 'amount',
-          label: 'Amount',
-          sortable: true
-        },
-        {
-          key: 'links',
-          label: 'Links'
-        }
-      ],
       clusterOptionsProject: {
         iconCreateFunction(cluster) {
           let n = cluster.getChildCount()
@@ -178,7 +144,7 @@ export default {
       console.log('load projects from filters',filters, 'params',params)
       this.$goteo
         .getProjects(params, data => {
-            this.info = data.meta.total + ' Projects'
+            this.info.projects = data.meta
             this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
             return this.projects = [...this.projects, ...data.items]
           }
@@ -190,7 +156,7 @@ export default {
       console.log('load invests',projects)
       this.$goteo
         .getInvests(projects, {}, data => {
-            this.info = data.meta.total + ' Invests'
+            this.info.invests = data.meta
             this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
             return this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
           }
@@ -231,21 +197,7 @@ export default {
         this.loadProjects(this.filters)
     },
     onList(type, list) {
-      list.forEach( it => {
-        if(!it.social_commitments || !it.social_commitments.length) return
-        it.social_commitments.forEach(s => {
-          this.social_commitments[type][s.id] = this.social_commitments[type][s.id] || []
-          if(this.social_commitments[type][s.id].find(v => v.id == s.id)) return
-          this.social_commitments[type][s.id].push(it)
-        })
-      })
-      console.log('onfilterlist', type,list, this.social_commitments[type])
-    },
-    getSdgsFromSocialCommitment(sid) {
-      return this.social_commitments.sdgs && this.social_commitments.sdgs[sid]
-    },
-    getFootprintsFromSocialCommitment(sid) {
-      return this.social_commitments.footprints && this.social_commitments.footprints[sid]
+      this[type] = list
     },
     getIcon(type, ob) {
       let ops ={
@@ -316,15 +268,5 @@ export default {
 .progress-wrap {
   height:30px;
   padding:8px 0 11px;
-}
-.icon-sdg {
-    width: 32px;
-    height: 32px;
-    margin: 0 2px 2px 0;
-}
-.icon-footprint {
-    width: auto;
-    height: 32px;
-    margin: 0 2px 2px 0;
 }
 </style>

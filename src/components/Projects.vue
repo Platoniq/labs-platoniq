@@ -12,7 +12,7 @@
         </b-progress>
       </div>
 
-      <l-map ref="map" style="height: 500px" :zoom="zoom" :center="center" :scroll-wheel-zoom="false" @move="mapMove">
+      <l-map ref="map" style="height: 500px" :zoom=zoom :center="center" :scroll-wheel-zoom="false" @move="mapMove">
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
         <l-circle :lat-lng="center" :radius="radius*1000" color="" fill-color="#988" :fill-opacity="0.10"></l-circle>
@@ -210,7 +210,7 @@ export default {
         query: {
           filters: JSON.stringify(this.filters),
           center: JSON.stringify(this.center),
-          zoom: JSON.stringify(this.zoom)
+          zoom: this.zoom
           }
         })
     },
@@ -281,25 +281,32 @@ export default {
       return this.invests.map((i) => [i.latitude, i.longitude, this.filters.socialHeat ? 10 : i.amount])
     }
   },
-  mounted() {
+  created() {
+    // Set map properties from query string before mounting the map
+    // it seems to be buggy if we do this on mounted() hook
     if(this.$route.query.filters) {
       try{ this.filters = JSON.parse(this.$route.query.filters) } catch(e){}
     }
     if(this.$route.query.center) {
-      try{ this.center = JSON.parse(this.$route.query.center) } catch(e){}
+      try{
+        let c = JSON.parse(this.$route.query.center)
+        this.center = [parseFloat(c[0]) || 41.5, parseFloat(c[1]) || -1]
+        console.log('center', c, this.center)
+      } catch(e){}
     }
     if(this.$route.query.zoom) {
-      try{ this.zoom = JSON.parse(this.$route.query.zoom) } catch(e){}
+      this.zoom = parseInt(this.$route.query.zoom) || 7
     }
-    console.log('mounted', 'center',this.center, 'zoom', this.zoom)
+  },
+  mounted() {
     // mapObject is not available directly in vue's mounted hook.
     this.$nextTick(() => {
       this.map = this.$refs.map.mapObject // work as expected
+      console.log('mounted', 'center',this.center, 'zoom', this.zoom)
       // Check querystring
       this.loadProjects(this.filters)
       if(this.filters.projects && this.filters.projects.length)
         this.loadInvests(this.filters.projects)
-
     })
   }
 }

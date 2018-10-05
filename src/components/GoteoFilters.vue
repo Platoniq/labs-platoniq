@@ -93,6 +93,28 @@ export default {
       hasFootprint(f) {
         console.log('has footprint', f, this.filters.footprints)
         return this.hasFootprints && !!this.filters.footprints.find(v => v.id==f.id)
+      },
+      setActiveProjects() {
+          // Load projects from props, rebuild the model
+        if(Array.isArray(this.queryFilters.projects)) {
+            this.filters.projects = []
+            this.queryFilters.projects.forEach(p => {
+                let prj = this.projectList.find(v => v.id == p)
+                if(prj) {
+                    this.filters.projects.push(prj)
+                    return
+                }
+                // // api search
+                // this.$goteo.getProjects({project:p}, r => {
+                //     if(r) {
+                //         console.log('fetch project', r, r.items[0])
+                //         this.projectList.push(r.items[0])
+                //         this.filters.projects.push(r.items[0])
+                //     }
+                // })
+            })
+        }
+        console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
       }
   },
   computed: {
@@ -116,6 +138,7 @@ export default {
       }
   },
   mounted() {
+    this.setActiveProjects()
     // compute query filters
     console.log('query filters', this.queryFilters, this.projectList, this.filters.projects)
     // Load footprints from API
@@ -150,26 +173,11 @@ export default {
   watch: {
     '$route.query.filters'() {
         console.log('change query string',this.$route.query)
-        // Load projects from props, rebuild the model
-        if(Array.isArray(this.queryFilters.projects)) {
-            this.filters.projects = []
-            this.queryFilters.projects.forEach(p => {
-                let prj = this.projectList.find(v => v.id == p)
-                if(prj) {
-                    this.filters.projects.push(prj)
-                    return
-                }
-                // // api search
-                // this.$goteo.getProjects({project:p}, r => {
-                //     if(r) {
-                //         console.log('fetch project', r, r.items[0])
-                //         this.projectList.push(r.items[0])
-                //         this.filters.projects.push(r.items[0])
-                //     }
-                // })
-            })
-        }
-        console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
+        this.setActiveProjects()
+    },
+    projectList() {
+        console.log('change projectList',this.projectList)
+        this.setActiveProjects()
     },
     loading() {
         if(!this.loaded && this.sdgList.length && this.footprintList.length) {

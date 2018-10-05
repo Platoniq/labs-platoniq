@@ -4,15 +4,16 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush"></filters>
+      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading=loading></filters>
 
+      <em v-if="invests.length" class="text-danger"><v-icon name="hand-point-right"></v-icon> Moving the map won't update projects list while while heat map is on</em>
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
           <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
         </b-progress>
       </div>
 
-      <l-map ref="map" style="height: 500px" :zoom=zoom :center="center" :scroll-wheel-zoom="false" @move="mapMove">
+      <l-map ref="map" style="height: 500px" :zoom=zoom :center="center" :options="{scrollWheelZoom:false}" @move="mapMove">
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
         <l-circle :lat-lng="center" :radius="radius*1000" color="" fill-color="#988" :fill-opacity="0.10"></l-circle>
@@ -40,7 +41,7 @@
 
       <hr>
 
-      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" ></project-list>
+      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading=loading></project-list>
 
     <div>
 
@@ -76,13 +77,14 @@ export default {
     return {
       map: null,
       center: [41.5,-1],
-      zoom:7,
-      radius:50,
+      zoom: 7,
+      radius: 50,
       projects: [],
       invests: [],
       footprints: [],
-      sdgs:[],
-      percent:100,
+      sdgs: [],
+      loading: [],
+      percent: 100,
       info:{
         numProjects: null,
         numInvests: null
@@ -110,9 +112,6 @@ export default {
     }
   },
   methods: {
-    onLoading(loading) { //listen the children, pass it to the parent
-      this.$emit('data-loading', loading)
-    },
     mapMove(ev) {
       // console.log('move map',ev)
       if(!this.filters.projects || !this.filters.projects.length)
@@ -144,25 +143,27 @@ export default {
         }
       }
       console.log('load projects from filters',filters, 'params',params)
+      this.addLoading('projects')
       this.$goteo
         .getProjects(params, data => {
-            this.info.projects = data.meta
-            this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
-            return this.projects = [...this.projects, ...data.items]
-          }
-        )
+          this.info.projects = data.meta
+          this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
+          if(this.percent>=100) this.removeLoading('projects')
+          this.projects = [...this.projects, ...data.items]
+        })
 
     },
     loadInvests(projects) {
       this.invests = []
       console.log('load invests',projects)
+      this.addLoading('invests')
       this.$goteo
         .getInvests(projects, {}, data => {
-            this.info.invests = data.meta
-            this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
-            return this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
-          }
-        )
+          this.info.invests = data.meta
+          this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
+          if(this.percent>=100) this.removeLoading('invests')
+          this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
+        })
 
     },
     getFiltersIds(filters) {
@@ -222,6 +223,14 @@ export default {
       this.loadInvests(this.filters.projects)
       // Set to query string, does not redirect
       this.pushToRoute()
+    },
+    addLoading(type) {
+      if(this.loading.indexOf(type) == -1)
+        this.loading.push(type)
+    },
+    removeLoading(type) {
+      const pos = this.loading.indexOf(type)
+      if(pos > -1) this.loading.splice(pos, 1)
     }
   },
   computed: {
@@ -255,29 +264,33 @@ export default {
   mounted() {
     // Load footprints from API
     if(!this.footprints.length) {
-        this.axios
-        .get('/footprints/')
-        .then(response => {
-          this.footprints = response.data.items
-            console.log('got goteo footprints', response, this.footprints)
-            // this.loading++
-        })
-        .catch(error => {
-            console.error('Goteo API error while fetching footprints', error)
-        })
+      this.addLoading('footprints')
+      this.axios
+      .get('/footprints/')
+      .then(response => {
+        this.footprints = response.data.items
+        this.removeLoading('footprints')
+        console.log('got goteo footprints', response, this.footprints)
+      })
+      .catch(error => {
+        this.removeLoading('footprints')
+        console.error('Goteo API error while fetching footprints', error)
+      })
     }
     // Load sdgs
-    if(!this.footprints.length) {
-        this.axios
-        .get('/sdgs/')
-        .then(response => {
-            console.log('got goteo sdgs', response)
-            this.sdgs = response.data.items
-            // this.loading++
-        })
-        .catch(error => {
-            console.error('Goteo API error while fetching SDGs', error)
-        })
+    if(!this.sdgs.length) {
+      this.addLoading('sdgs')
+      this.axios
+      .get('/sdgs/')
+      .then(response => {
+        console.log('got goteo sdgs', response)
+        this.sdgs = response.data.items
+        this.removeLoading('sdgs')
+      })
+      .catch(error => {
+        this.removeLoading('sdgs')
+        console.error('Goteo API error while fetching SDGs', error)
+      })
     }
     // mapObject is not available directly in vue's mounted hook.
     this.$nextTick(() => {

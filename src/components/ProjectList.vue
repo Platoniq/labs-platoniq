@@ -1,35 +1,45 @@
 <template>
-  <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
-    <template slot="name" slot-scope="{item}">
-        {{ item.name }}
-    </template>
-    <template slot="description" slot-scope="{item}">
-      <p class="text-muted">{{ item['description-short'] }}</p>
-      <b-row>
-      <b-col cols="7">
-          <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
-      </b-col>
-      <b-col>
-          <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
-      </b-col>
-      </b-row>
-  </template>
-  <template slot="amount" slot-scope="{item}">
-      {{ item.amount }} €
-  </template>
-  <template slot="links" slot-scope="{item}">
-      <b-btn title="Goto project page" :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></b-btn>
-      <b-btn :title="inFilters(item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" :to="toggleRouteForProject(item)" exact :pressed="inFilters(item)"><v-icon alt="Show invests" name="donate"></v-icon></b-btn>
-  </template>
-  </b-table>
+  <div>
 
+    <b-btn v-if="projects.length" @click="downloadCsv()"><v-icon name="file-excel"/> Download CSV</b-btn>
+    <v-icon v-if="loading.indexOf('projects')>-1" name="spinner" spin/>
+
+    <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
+      <template slot="name" slot-scope="{item}">
+          {{ item.name }}
+      </template>
+      <template slot="description" slot-scope="{item}">
+        <p class="text-muted">{{ item['description-short'] }}</p>
+        <b-row>
+        <b-col cols="7">
+            <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
+        </b-col>
+        <b-col>
+            <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
+        </b-col>
+        </b-row>
+    </template>
+    <template slot="amount" slot-scope="{item}">
+        {{ item.amount }} €
+    </template>
+    <template slot="links" slot-scope="{item}">
+        <b-btn title="Goto project page" :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></b-btn>
+        <b-btn :title="inFilters(item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" :to="toggleRouteForProject(item)" exact :pressed="inFilters(item)"><v-icon alt="Show invests" name="donate"/></b-btn>
+    </template>
+    </b-table>
+  </div>
 </template>
 
 <script>
+import Papa from 'papaparse'
 
 export default {
   name: "ProjectList",
   props: {
+    loading: {
+        type: Array,
+        default: () => []
+    },
     projects: {
       type: Array,
       default: () => []
@@ -73,10 +83,10 @@ export default {
   },
   methods: {
     getSdgsFromSocialCommitment(sid) {
-      return this.social_commitments.sdgs && this.social_commitments.sdgs[sid]
+      return this.social_commitments.sdgs && this.social_commitments.sdgs[sid] || []
     },
     getFootprintsFromSocialCommitment(sid) {
-      return this.social_commitments.footprints && this.social_commitments.footprints[sid]
+      return this.social_commitments.footprints && this.social_commitments.footprints[sid] || []
     },
     onList(type, list) {
       list.forEach( it => {
@@ -111,6 +121,24 @@ export default {
         name: this.$route.name,
         query: {filters: JSON.stringify(filters), zoom: zoom, center: JSON.stringify(center)}
       }
+    },
+    downloadCsv() {
+      if(!this.projects || !this.projects.length) return
+      let projects = this.projects.map(p => {
+        p.footprints = this.getFootprintsFromSocialCommitment(p['social-commitment-id']).map(f => f.name)
+        p.sdgs = this.getSdgsFromSocialCommitment(p['social-commitment-id']).map(f => f.name)
+        return p
+      })
+      let csv = Papa.unparse(projects)
+      if (!csv.match(/^data:text\/csv/i)) {
+        csv = 'data:text/csv;charset=utf-8,' + csv
+      }
+      let link = document.createElement('a')
+      link.setAttribute('href', encodeURI(csv))
+      link.setAttribute('download', projects.length + '-projects.csv')
+      document.body.appendChild(link); // Required for FF
+      link.click()
+      document.body.removeChild(link);
     }
   },
   watch: {

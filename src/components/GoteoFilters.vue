@@ -2,7 +2,7 @@
   <div>
     <b-row>
         <b-col class="filter-footprints">
-
+            <v-icon v-if="loading.length" name="spinner" spin/>
             <b-row>
                 <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
             </b-row>
@@ -45,6 +45,10 @@ import Multiselect from 'vue-multiselect'
 export default {
   name: "GoteoFilters",
   props: {
+    loading: {
+        type: Array,
+        default: () => []
+    },
     projectList: {
         type: Array,
         default: () => []
@@ -144,7 +148,6 @@ export default {
   computed: {
       hasFootprints() {
           return this.filters.footprints && this.filters.footprints.length
-        //   return this.activeFootprints.length > 0
       },
       hasSdgs() {
           return this.filters.sdgs && this.filters.sdgs.length

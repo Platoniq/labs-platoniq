@@ -110,14 +110,15 @@ export default {
               this.filters.projects.push(it)
               return
           }
-          // // api search
-          // this.$goteo.getProjects({project:p}, r => {
-          //     if(r) {
-          //         console.log('fetch project', r, r.items[0])
-          //         this.projectList.push(r.items[0])
-          //         this.filters.projects.push(r.items[0])
-          //     }
-          // })
+          if(this.loading.indexOf('projects') > -1) return;
+          // api search
+          this.$goteo.getProjects({project:p}, r => {
+              if(r && r.items && r.items.length) {
+                console.log('fetch project', r, r.items[0])
+                this.projectList.push(r.items[0])
+                this.filters.projects.unshift(r.items[0])
+              }
+          })
         })
       }
       console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)

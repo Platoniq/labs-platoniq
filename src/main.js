@@ -17,12 +17,14 @@ import 'bootstrap/dist/css/bootstrap.css'
 import App from './App.vue'
 import 'vue-awesome/icons'
 import Icon from 'vue-awesome/components/Icon'
+import SocialSharing from 'vue-social-sharing'
 import routes from './routes.js'
 import GoteoApi from "./plugins/GoteoApi/GoteoApi"
 const conf = require("../config" + (process.env.NODE_ENV === 'production' ? '.production' : '') + ".json")
 
 // Fontawesome globally (in your main .js file)
 Vue.component('v-icon', Icon)
+Vue.use(SocialSharing);
 
 // REST API client
 axios.defaults.baseURL = conf.goteo.api_uri

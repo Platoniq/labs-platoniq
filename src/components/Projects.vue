@@ -6,7 +6,7 @@
 
       <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading=loading></filters>
 
-      <em v-if="invests.length" class="text-danger"><v-icon name="hand-point-right"></v-icon> Moving the map won't update projects list while while heat map is on</em>
+      <em v-if="invests.length" class="text-danger"><v-icon name="hand-point-right"></v-icon> Moving the map won't update projects list while heat map is active</em>
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
           <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>

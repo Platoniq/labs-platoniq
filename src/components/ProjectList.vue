@@ -1,22 +1,48 @@
 <template>
   <div>
 
-    <b-btn v-if="projects.length" @click="downloadCsv()"><v-icon name="file-excel"/> Download CSV</b-btn>
+    <b-row>
+      <b-col>
+        <b-btn v-if="projects.length" @click="downloadCsv()"><v-icon name="file-excel"/> Download CSV</b-btn>
+      </b-col>
+      <b-col class="text-right">
+        <social-sharing inline-template>
+          <b-button-group>
+            <network network="facebook">
+              <b-btn title="Facebook" variant="secondary"><v-icon name="brands/facebook"/></b-btn>
+            </network>
+            <network network="twitter">
+              <b-btn title="Twitter" variant="secondary"><v-icon name="brands/twitter"/></b-btn>
+            </network>
+            <network network="telegram">
+              <b-btn title="Telegram" variant="secondary"><v-icon name="brands/telegram"/></b-btn>
+            </network>
+            <network network="whatsapp">
+              <b-btn title="Whatsapp" variant="secondary"><v-icon name="brands/whatsapp"/></b-btn>
+            </network>
+          </b-button-group>
+        </social-sharing>
+
+      </b-col>
+    </b-row>
     <v-icon v-if="loading.indexOf('projects')>-1" name="spinner" spin/>
 
     <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
-      <template slot="name" slot-scope="{item}">
-          {{ item.name }}
+      <template slot="image" slot-scope="{item}">
+          <img :src="item['image-url']" class="icon-project">
       </template>
-      <template slot="description" slot-scope="{item}">
+      <template slot="name" slot-scope="{item}">
+        <p>{{ item.name }}
+          <em class="float-right text-muted">{{ getDate(item['date-published']) }}</em>
+        </p>
         <p class="text-muted">{{ item['description-short'] }}</p>
         <b-row>
-        <b-col cols="7">
+          <b-col cols="7">
             <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
-        </b-col>
-        <b-col>
+          </b-col>
+          <b-col>
             <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
-        </b-col>
+          </b-col>
         </b-row>
     </template>
     <template slot="amount" slot-scope="{item}">
@@ -32,6 +58,7 @@
 
 <script>
 import Papa from 'papaparse'
+import moment from 'moment'
 
 export default {
   name: "ProjectList",
@@ -61,13 +88,13 @@ export default {
       },
       fields: [
         {
+          key: 'image',
+          label: 'Image'
+        },
+        {
           key: 'name',
           label: 'Name',
           sortable: true
-        },
-        {
-          key: 'description',
-          label: 'Description'
         },
         {
           key: 'amount',
@@ -82,6 +109,9 @@ export default {
     }
   },
   methods: {
+    getDate(date) {
+      return moment(date).format('MMMM YYYY')
+    },
     getSdgsFromSocialCommitment(sid) {
       return this.social_commitments.sdgs && this.social_commitments.sdgs[sid] || []
     },
@@ -153,7 +183,7 @@ export default {
 
 </script>
 
-<style>
+<style lang="scss">
 .icon-sdg {
     width: 32px;
     height: 32px;
@@ -163,5 +193,9 @@ export default {
     width: auto;
     height: 32px;
     margin: 0 2px 2px 0;
+}
+.icon-project {
+  width: 150px;
+  height: auto;
 }
 </style>

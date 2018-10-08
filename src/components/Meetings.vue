@@ -7,82 +7,81 @@
 
     <div v-for="component in components" :key="component.id">
       <b-row>
-        <b-col cols="8">
+        <b-col>
           <h4>{{ component.name.translations[0].text }}</h4>
         </b-col>
-        <b-col cols="4">
+        <b-col cols="3">
           <b-nav pills>
             <b-nav-item :active="getView==='table'" :to="{name: $route.name, params: {id: id, view: 'table'}}">Table</b-nav-item>
             <b-nav-item :active="getView==='map'" :to="{name: $route.name, params: {id: id, view: 'map'}}">Map</b-nav-item>
           </b-nav>
         </b-col>
-        </b-row>
-        <hr/>
-        <div>
-          <b-table v-if="getView==='table'" v-bind:class="{muted: $apollo.loading }" bordered hover :items="component.meetings.edges" :fields="fields">
-            <template slot="id" slot-scope="data">
-              {{ data.item.node.id }}
-            </template>
-            <template slot="title" slot-scope="data">
-              {{ data.item.node.title.translations[0].text }}
-            </template>
-            <template slot="address" slot-scope="data">
-              {{ data.item.node.address }}
-            </template>
-            <template slot="coordinates" slot-scope="data">
-              {{ data.item.node.coordinates.latitude }},
-              {{ data.item.node.coordinates.longitude }}
-            </template>
-          </b-table>
+        <b-col cols="2" v-if="project">
+          <switches v-model="filters.socialHeat" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
+        </b-col>
+      </b-row>
+      <hr/>
+      <div>
+        <b-table v-if="getView==='table'" v-bind:class="{muted: $apollo.loading }" bordered hover :items="component.meetings.edges" :fields="fields">
+          <template slot="id" slot-scope="data">
+            {{ data.item.node.id }}
+          </template>
+          <template slot="title" slot-scope="data">
+            {{ data.item.node.title.translations[0].text }}
+          </template>
+          <template slot="address" slot-scope="data">
+            {{ data.item.node.address }}
+          </template>
+          <template slot="coordinates" slot-scope="data">
+            {{ data.item.node.coordinates.latitude }},
+            {{ data.item.node.coordinates.longitude }}
+          </template>
+        </b-table>
 
-          <div v-else>
-            <p v-if="project">
-               <switches v-model="filters.socialHeat" @input="onChange" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
-            </p>
-
-            <div class="progress-wrap">
-              <b-progress v-if="percent<100" :max="100" animated variant="info">
-                <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
-              </b-progress>
-            </div>
-
-             <l-map ref="map" style="height: 500px" :options="{scrollWheelZoom:false}" :zoom="zoom" :bounds="bounds">
-              <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-
-              <l-marker-cluster :options="clusterOptionsSignature">
-                <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords" :icon="getIcon('signature')">
-                  <l-tooltip :content="marker.title"></l-tooltip>
-                </l-marker>
-              </l-marker-cluster>
-
-              <l-marker-cluster :options="clusterOptionsProject">
-                <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project', p)">
-                  <l-tooltip :content="p.name"></l-tooltip>
-                </l-marker>
-              </l-marker-cluster>
-
-              <l-marker-cluster v-if="project" ref="paymentCluster" :options="clusterOptionsPayment">
-                <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i.amount)">
-                  <l-tooltip :content="i.amount + '€'"></l-tooltip>
-                </l-marker>
-              </l-marker-cluster>
-
-              <LeafletHeatmap v-if="project" :lat-lngs="investLocations"></LeafletHeatmap>
-            </l-map>
-
-            <div class="text-muted">
-              <b-badge v-if="info.projects" variant="info">{{info.projects.total}} Projects - {{projects.reduce((c,p) => c + p.amount, 0)}} €</b-badge>
-              <b-badge v-if="invests.length && info.invests" variant="secondary">{{info.invests.total}} Invests - {{invests.reduce((c,i) => c + i.amount, 0)}} €</b-badge>
-            </div>
-
+        <div v-else>
+          <div class="progress-wrap">
+            <b-progress v-if="percent<100" :max="100" animated variant="info">
+              <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
+            </b-progress>
           </div>
 
-          <h5>Goteo projects:</h5>
-          <!-- <div>
-            <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'decidim-initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
-          </div> -->
+          <l-map ref="map" style="height: 500px" :options="{scrollWheelZoom:false}" :zoom="zoom" :bounds="bounds">
+          <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
-          <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading="loading"></project-list>
+          <l-marker-cluster :options="clusterOptionsSignature">
+            <l-marker v-for="marker in markers" :key="marker.id" :lat-lng="marker.coords" :icon="getIcon('signature')">
+              <l-tooltip :content="marker.title"></l-tooltip>
+            </l-marker>
+          </l-marker-cluster>
+
+          <l-marker-cluster :options="clusterOptionsProject">
+            <l-marker v-for="p in projects" :key="p.id" v-if="project===p.id || !project" :lat-lng="[p.latitude,p.longitude]" :zIndexOffset="1000000" @click="gotoProject(p)" :icon="getIcon('project', p)">
+              <l-tooltip :content="p.name"></l-tooltip>
+            </l-marker>
+          </l-marker-cluster>
+
+          <l-marker-cluster v-if="project" ref="paymentCluster" :options="clusterOptionsPayment">
+            <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i.amount)">
+              <l-tooltip :content="i.amount + '€'"></l-tooltip>
+            </l-marker>
+          </l-marker-cluster>
+
+          <LeafletHeatmap v-if="project" :lat-lngs="investLocations"></LeafletHeatmap>
+        </l-map>
+
+        <div class="text-muted">
+          <b-badge v-if="info.projects" variant="info">{{info.projects.total}} Projects - {{projects.reduce((c,p) => c + p.amount, 0)}} €</b-badge>
+          <b-badge v-if="invests.length && info.invests" variant="secondary">{{info.invests.total}} Invests - {{invests.reduce((c,i) => c + i.amount, 0)}} €</b-badge>
+        </div>
+
+      </div>
+
+      <h5>Goteo projects:</h5>
+      <!-- <div>
+        <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'decidim-initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
+      </div> -->
+
+      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading="loading"></project-list>
 
       </div>
     </div>
@@ -286,7 +285,7 @@ export default {
     onFilter(obFilters) {
       this.filters = this.getFiltersIds(obFilters)
       console.log('filter', obFilters, this.filters)
-      this.loadProjects()
+      this.loadProjects(this.filters)
     },
     loadProjects(filters) {
       let radius = Math.max(2, Math.floor(this.bounds.getCenter().distanceTo(new L.latLng(this.bounds.getNorth(), this.bounds.getCenter().lng))/1000))
@@ -302,6 +301,7 @@ export default {
         }
       }
       this.addLoading('projects')
+      console.log('loading projects, params', params)
       this.$goteo
         .getProjects(params, data => {
           this.info.projects = data.meta

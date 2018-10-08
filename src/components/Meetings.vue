@@ -4,13 +4,13 @@
     <div v-if="!components.length && !isLoading('meetings')" class="alert alert-warning">Sorry, no meetings in this component</div>
 
     <filters v-else :with-projects="false" :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading="loading"></filters>
-
+    <hr>
     <div v-for="component in components" :key="component.id">
       <b-row>
         <b-col>
           <h4>{{ component.name.translations[0].text }}</h4>
         </b-col>
-        <b-col cols="3">
+        <b-col cols="4">
           <b-nav pills>
             <b-nav-item :active="getView==='table'" :to="{name: $route.name, params: {id: id, view: 'table'}}">Table</b-nav-item>
             <b-nav-item :active="getView==='map'" :to="{name: $route.name, params: {id: id, view: 'map'}}">Map</b-nav-item>
@@ -20,7 +20,7 @@
           <switches v-model="filters.socialHeat" text-disabled="Amount heat" text-enabled="Social heat" color="info" type-bold="true" theme="bootstrap"></switches>
         </b-col>
       </b-row>
-      <hr/>
+
       <div>
         <b-table v-if="getView==='table'" v-bind:class="{muted: $apollo.loading }" bordered hover :items="component.meetings.edges" :fields="fields">
           <template slot="id" slot-scope="data">

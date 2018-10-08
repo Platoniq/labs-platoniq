@@ -3,6 +3,7 @@
     <b-row>
         <b-col class="filter-footprints">
             <v-icon v-if="loading.length" name="spinner" spin/>
+            <span v-if="!hasFootprints" class="text-muted"><em>Filter by footprints</em></span>
             <b-row>
                 <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
             </b-row>
@@ -12,14 +13,14 @@
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect> -->
         </b-col>
-        <b-col :cols="hasFootprints ? 6 : 2" class="filter-sdgs">
+        <b-col :class="'filter-sdgs' + (hasFootprints ? ' show-sdgs' : '')">
+
 
             <multiselect v-if="hasFootprints" v-model="filters.sdgs" :options="filteredSdgList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by SDG">
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
 
-            <p v-else class="text-muted"><em>Filter by footprints</em></p>
 
         </b-col>
     </b-row>
@@ -197,12 +198,16 @@ export default {
 
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
-<style>
+<style lang="scss">
 .multiselect--active {
   z-index: 10000;
 }
-.filter-projects .multiselect__option--highlight,.filter-projects .multiselect__option--highlight::after,.filter-projects .multiselect__tag {
+.filter-projects {
+  .multiselect__option--highlight,
+  .multiselect__option--highlight::after,
+  .multiselect__tag {
     background-color: rgb(43,157,155);
+  }
 }
 .image-circle {
     width: 32px;
@@ -223,12 +228,34 @@ export default {
   filter: none;
 }
 
-.col-2 {
-  flex-shrink: 1;
-  transition: all 400ms ease;
+// .col-2 {
+//   flex-shrink: 1;
+//   transition: all 400ms ease;
+// }
+// .col-6 {
+//   flex-grow: 1;
+//   transition: all 400ms ease;
+// }
+.filter-footprints,.filter-sdgs {
+  width: 100%;
+  max-width: 100%;
+  flex: none;
 }
-.col-6 {
-  flex-grow: 1;
-  transition: all 400ms ease;
+
+@media(min-width:768px) {
+  .filter-footprints,.filter-sdgs {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 1;
+    width: auto;
+    transition: all 400ms ease;
+    &.filter-sdgs {
+      max-width: 0;
+      // max-width: 0;
+      &.show-sdgs {
+        max-width: 50%;
+      }
+    }
+  }
 }
 </style>

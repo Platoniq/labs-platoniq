@@ -1,26 +1,13 @@
+import Loaders from '../mixins/Loaders'
+
 export default {
   data() {
     return {
       footprints: [],
-      sdgs: [],
-      loading: []
+      sdgs: []
     }
   },
-  methods: {
-    addLoading(type) {
-      if(this.loading.indexOf(type) == -1)
-        this.loading.push(type)
-    },
-    removeLoading(type) {
-      const pos = this.loading.indexOf(type)
-      if(pos > -1) this.loading.splice(pos, 1)
-    },
-    isLoading(type) {
-      if(type)
-        return this.loading.indexOf(type) > -1
-      return this.loading.length > 0
-    }
-  },
+  mixins: [Loaders],
   created() {
     // Load footprints from API
     if(!this.footprints.length) {
@@ -52,6 +39,17 @@ export default {
         console.error('Goteo API error while fetching SDGs', error)
       })
     }
+  },
+  watch: {
+    sdgs() {
+      if (!this.sdgs.length) {
+        this.removeLoading('sdgs')
+      }
+    },
+    footprints() {
+      if (!this.footprints.length) {
+        this.removeLoading('footprints')
+      }
+    }
   }
-
 }

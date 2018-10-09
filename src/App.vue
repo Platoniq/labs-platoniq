@@ -2,7 +2,7 @@
 <template>
   <div id="app">
     <header class="header">
-      <NavHeader :loading="loading" />
+      <NavHeader/>
     </header>
 
     <main>
@@ -28,14 +28,10 @@ export default {
   },
   data() {
     return {
-      loading: false,
       breadcrumb: []
     }
   },
   methods: {
-    onLoading(loading) {
-      this.loading = loading
-    },
     setBreadcrumb(to) {
       to = to || this.$route
       this.breadcrumb = to.matched.map(m => m.meta && m.meta.text || m.name)
@@ -57,6 +53,10 @@ export default {
 @import "~leaflet/dist/leaflet.css";
 @import "~leaflet.markercluster/dist/MarkerCluster.css";
 @import "~leaflet.markercluster/dist/MarkerCluster.Default.css";
+
+#map {
+  height: 500px;
+}
 .header {
   margin-bottom: 2rem;
 }

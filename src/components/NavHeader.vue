@@ -21,7 +21,7 @@
       </b-navbar-nav>
     </b-collapse>
 
-    <b-navbar-nav right><b-nav-item><v-icon v-if="loading" name="sync" spin/></b-nav-item></b-navbar-nav>
+    <b-navbar-nav right><b-nav-item><v-icon v-if="isLoading()" name="spinner" spin/></b-nav-item></b-navbar-nav>
 
   </b-navbar>
 </template>
@@ -29,14 +29,15 @@
 
 <script>
 import routes from '../routes.js'
+import Loaders from '../mixins/Loaders.js'
 
 export default {
-  props: ['loading'],
   data() {
     return {
       routes: routes,
     }
   },
+  mixins: [Loaders],
   computed: {
     section() {
         return this.$route.matched.length && this.$route.matched[0].name

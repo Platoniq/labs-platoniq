@@ -34,7 +34,7 @@ const GoteoApi = {
           params = params || {}
           if(!params.project) {
             params.status = ['in_campaign', 'funded', 'fulfilled']
-            params.from_date = '2013-12-16' // First project with social_commitment
+            // params.from_date = '2013-12-16' // First project with social_commitment
           }
             params.limit = 50
           params.page = params.page || 0

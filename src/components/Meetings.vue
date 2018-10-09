@@ -3,7 +3,7 @@
 
     <div v-if="!components.length && !isLoading('meetings')" class="alert alert-warning">Sorry, no meetings in this component</div>
 
-    <filters v-else :with-projects="false" :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading="loading"></filters>
+    <filters v-else :with-projects="false" :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush"></filters>
     <hr>
     <div v-for="component in components" :key="component.id">
       <b-row>
@@ -45,7 +45,7 @@
             </b-progress>
           </div>
 
-          <l-map ref="map" style="height: 500px" :options="{scrollWheelZoom:false}" :zoom="zoom" :bounds="bounds">
+          <l-map id="map" ref="map" :options="{scrollWheelZoom:false}" :zoom="zoom" :bounds="bounds">
           <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
           <l-marker-cluster :options="clusterOptionsSignature">
@@ -81,7 +81,7 @@
         <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'decidim-initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
       </div> -->
 
-      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading="loading"></project-list>
+      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" v-on:goto-project="gotoProject"></project-list>
 
       </div>
     </div>
@@ -96,6 +96,7 @@ import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 // import Vue2LeafletHeatmap from 'vue2-leaflet-heatmap'
 import Switches from 'vue-switches'
 import Footprints from '../mixins/Footprints'
+import Loaders from '../mixins/Loaders'
 import MapUtils from '../mixins/MapUtils'
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
@@ -157,7 +158,7 @@ export default {
     Filters,
     ProjectList
   },
-  mixins: [Footprints, MapUtils],
+  mixins: [Loaders, Footprints, MapUtils],
   apollo: {
     initiative: {
       query,

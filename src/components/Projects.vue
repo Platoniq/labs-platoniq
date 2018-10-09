@@ -4,35 +4,39 @@
 
       <!-- <h2>Goteo projects</h2> -->
 
-      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading="loading"></filters>
+      <filters :sdg-list="sdgs" :footprint-list="footprints" :project-list="projects" v-on:filter="onFilterPush" :loading="isLoading()"></filters>
 
       <em v-if="invests.length" class="text-danger"><v-icon name="hand-point-right"></v-icon> Moving the map won't update projects list while heat map is active</em>
+
       <div class="progress-wrap">
         <b-progress v-if="percent<100" :max="100" animated variant="info">
           <b-progress-bar :value="percent" :label="percent + '%'" ></b-progress-bar>
         </b-progress>
       </div>
 
-      <l-map ref="map" style="height: 500px" :zoom=zoom :center="center" :options="{scrollWheelZoom:false}" @move="mapMove">
-        <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
+      <div class="map_container">
+        <l-map id="map" ref="map" :zoom=zoom :center="center" :options="{scrollWheelZoom:false}" @move="mapMove">
+          <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
 
-        <l-circle :lat-lng="center" :radius="radius*1000" color="" fill-color="#988" :fill-opacity="0.10"></l-circle>
+          <!-- <l-circle v-if="radius<=500" :lat-lng="center" :radius="radius*1000" color="" fill-color="#988" fill-opacity="0.1"></l-circle> -->
 
-        <l-marker-cluster :options="clusterOptionsProject">
-          <l-marker v-for="p in projectLocations" :key="p.id" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
-            <l-tooltip :content="p.name"></l-tooltip>
-          </l-marker>
-        </l-marker-cluster>
+          <l-marker-cluster :options="clusterOptionsProject">
+            <l-marker v-for="p in projectLocations" :key="p.id" :lat-lng="[p.latitude,p.longitude]" @click="gotoProject(p)" :icon="getIcon('project', p)">
+              <l-tooltip :content="p.name"></l-tooltip>
+            </l-marker>
+          </l-marker-cluster>
 
-        <l-marker-cluster :options="clusterOptionsPayment">
-          <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i)">
-            <l-tooltip :content="i.amount + '€'"></l-tooltip>
-          </l-marker>
-        </l-marker-cluster>
+          <l-marker-cluster :options="clusterOptionsPayment">
+            <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i)">
+              <l-tooltip :content="i.amount + '€'"></l-tooltip>
+            </l-marker>
+          </l-marker-cluster>
 
-        <LeafletHeatmap :lat-lngs="investLocations"></LeafletHeatmap>
+          <LeafletHeatmap :lat-lngs="investLocations"></LeafletHeatmap>
 
-      </l-map>
+        </l-map>
+        <img v-if="isLoading('projects')" id="map-radar" src="static/img/radar.svg">
+      </div>
 
       <div class="text-muted">
         <b-badge v-if="info.projects" variant="info">{{info.projects.total}} Projects - {{projects.reduce((c,p) => c + p.amount, 0)}} €</b-badge>
@@ -41,7 +45,7 @@
 
       <hr>
 
-      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" :loading="loading"></project-list>
+      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" v-on:goto-project="toggleRouteForProject"></project-list>
 
     <div>
 
@@ -54,13 +58,14 @@
 
 <script>
 import L from 'leaflet'
-import { LMap,LTileLayer,LCircle,LMarker,LPopup,LTooltip } from 'vue2-leaflet'
+import { LMap,LTileLayer,LCircle,LPolyline,LMarker,LPopup,LTooltip } from 'vue2-leaflet'
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
 import Footprints from '../mixins/Footprints'
 import MapUtils from '../mixins/MapUtils'
+import Loaders from '../mixins/Loaders'
 
 export default {
   components: {
@@ -68,6 +73,7 @@ export default {
     LTileLayer,
     LMarker,
     'l-circle': LCircle,
+    'l-polyline': LPolyline,
     LPopup,
     LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
@@ -75,11 +81,12 @@ export default {
     'filters': Filters,
     'project-list': ProjectList
   },
-  mixins: [Footprints, MapUtils],
+  mixins: [Loaders, MapUtils, Footprints],
   data() {
     return {
       map: null,
       center: [41.5,-1],
+      bounds: null,
       zoom: 7,
       radius: 50,
       projects: [],
@@ -102,17 +109,28 @@ export default {
       // Set to query string, does not redirect
       this.pushToRoute()
     },
+    toggleRouteForProject(p) {
+      let center = []
+      const zoom = this.$route.query.zoom
+      const pos = this.filters.projects.indexOf(p.id)
+      if(pos > -1) this.filters.projects.splice(pos, 1)
+      else this.filters.projects.push(p.id)
+      try { center = JSON.parse(this.$route.query.center) } catch(e){}
+      this.loadProjects(this.filters)
+      // Set to query string, does not redirect
+      this.pushToRoute()
+    },
     loadProjects(filters) {
       if(!this.map) return;
       this.projects = []
       this.invests = []
       this.$goteo.cancel() // Cancel any current loading
       let center = this.map.getCenter()
-      let bounds = this.map.getBounds()
+      this.bounds = this.map.getBounds()
       // Minimal radius:
-      this.radius = Math.min(500,Math.max(1,Math.round(center.distanceTo(new L.latLng(bounds.getNorth(), center.lng)) / 1000)))
+      this.radius = Math.max(1,Math.round(center.distanceTo(new L.latLng(this.bounds.getNorth(), center.lng)) / 1000))
       // Maximal radius
-      // this.radius = Math.max(1,Math.round(center.distanceTo(bounds.getNorthWest()) / 1000))
+      // this.radius = Math.max(1,Math.round(center.distanceTo(this.bounds.getNorthWest()) / 1000))
       this.center = [center.lat, center.lng]
       this.zoom = this.map.getZoom()
       let params = {location: center.lat + ',' + center.lng + ',' + this.radius}
@@ -144,7 +162,8 @@ export default {
         .getInvests(projects, {}, data => {
           this.info.invests = data.meta
           this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
-          if(this.percent>=100) this.removeLoading('invests')
+          // console.log('step invests', this.percent)
+          if(this.percent >= 100) this.removeLoading('invests')
           this.invests = [...this.invests, ...data.items.filter(i => i.latitude && i.longitude)]
         })
 
@@ -234,5 +253,18 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+.map_container {
+  position:relative;
+  img#map-radar {
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    margin:0 auto;
+    height:100%;
+    width:auto;
+    z-index:1000;
+  }
+}
 </style>

@@ -25,7 +25,7 @@
 
       </b-col>
     </b-row>
-    <v-icon v-if="loading.indexOf('projects')>-1" name="spinner" spin/>
+    <v-icon v-if="isLoading('projects')" name="spinner" spin/>
 
     <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
       <template slot="image" slot-scope="{item}">
@@ -50,7 +50,7 @@
     </template>
     <template slot="links" slot-scope="{item}">
         <b-btn title="Goto project page" :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></b-btn>
-        <b-btn :title="inFilters(item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" :to="toggleRouteForProject(item)" exact :pressed="inFilters(item)"><v-icon alt="Show invests" name="donate"/></b-btn>
+        <b-btn :title="inFilters(item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" @click="gotoProject(item)" exact :pressed="inFilters(item)"><v-icon alt="Show invests" name="donate"/></b-btn>
     </template>
     </b-table>
   </div>
@@ -59,14 +59,11 @@
 <script>
 import Papa from 'papaparse'
 import moment from 'moment'
+import Loaders from '../mixins/Loaders'
 
 export default {
   name: "ProjectList",
   props: {
-    loading: {
-        type: Array,
-        default: () => []
-    },
     projects: {
       type: Array,
       default: () => []
@@ -108,6 +105,7 @@ export default {
       ],
     }
   },
+  mixins: [Loaders],
   methods: {
     getDate(date) {
       return moment(date).format('MMMM YYYY')
@@ -137,6 +135,10 @@ export default {
     },
     inFilters(item) {
       return this.getFilters().projects.indexOf(item.id) > -1
+    },
+    gotoProject(p) {
+      console.log('goto project', p);
+      this.$emit('goto-project', p)
     },
     toggleRouteForProject(p) {
       let filters = this.getFilters()

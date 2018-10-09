@@ -2,8 +2,10 @@
   <div>
     <b-row>
         <b-col class="filter-footprints">
-            <v-icon v-if="loading.length" name="spinner" spin/>
-            <span v-if="!hasFootprints" class="text-muted"><em>Filter by footprints</em></span>
+            <p :title="getLoading()">
+              <v-icon v-if="isLoading()" name="spinner" spin/>
+              <span v-if="!hasFootprints" class="text-muted"><em>Filter by footprints</em></span>
+            </p>
             <b-row>
                 <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
             </b-row>
@@ -20,7 +22,6 @@
                 <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
                 <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
             </multiselect>
-
 
         </b-col>
     </b-row>
@@ -42,14 +43,11 @@
 <script>
 import Switches from 'vue-switches'
 import Multiselect from 'vue-multiselect'
+import Loaders from '../mixins/Loaders'
 
 export default {
   name: "GoteoFilters",
   props: {
-    loading: {
-        type: Array,
-        default: () => []
-    },
     projectList: {
         type: Array,
         default: () => []
@@ -71,6 +69,7 @@ export default {
         default: true
     }
   },
+  mixins: [Loaders],
   components: {
     Switches,
     Multiselect
@@ -115,7 +114,7 @@ export default {
               this.filters.projects.push(it)
               return
           }
-          if(this.loading.indexOf('projects') > -1) return;
+          if(this.isLoading('projects')) return;
           // api search
           this.$goteo.getProjects({project:p}, r => {
               if(r && r.items && r.items.length) {

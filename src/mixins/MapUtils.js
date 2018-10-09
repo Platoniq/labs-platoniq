@@ -5,7 +5,6 @@ export default {
     return {
       footprints: [],
       sdgs: [],
-      loading: [],
       clusterOptionsProject: {
         iconCreateFunction(cluster) {
           let n = cluster.getChildCount()

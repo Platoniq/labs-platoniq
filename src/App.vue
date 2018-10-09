@@ -34,6 +34,7 @@ export default {
   methods: {
     setBreadcrumb(to) {
       to = to || this.$route
+      if(to.name == 'home') return
       this.breadcrumb = to.matched.map(m => m.meta && m.meta.text || m.name)
     }
   },

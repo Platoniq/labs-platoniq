@@ -8,7 +8,7 @@
     <b-collapse is-nav id="nav_collapse">
       <b-navbar-nav>
 
-        <b-nav-item v-for="m in routes" v-if="!m.children" :key="m.name" :active="section==m.name" :to="{name: m.name}">
+        <b-nav-item v-for="m in routes" v-if="m.name!='home' && !m.children" :key="m.name" :active="section==m.name" :to="{name: m.name}">
           {{ m.meta && m.meta.text || m.name }}
         </b-nav-item>
 

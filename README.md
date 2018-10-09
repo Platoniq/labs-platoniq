@@ -2,6 +2,10 @@
 
 > Labs Platoniq/Decidim
 
+Experimental visualizations made with [VueJS](https://vuejs.org/).
+
+Uses the APIs of [Goteo](https://goteo.org) and [Decidim](https://decidim.org).
+
 ## Configure
 
 1. Create a `config.json` file using `config.example.json` as base:

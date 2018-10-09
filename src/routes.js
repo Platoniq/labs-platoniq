@@ -1,40 +1,46 @@
 import Projects from "./components/Projects.vue"
 import Initiatives from "./components/Initiatives.vue"
+import Home from "./components/Home.vue"
 const Wrapper = {
-  template: '<router-view></router-view>'
+template: '<router-view></router-view>'
 }
 
 export default [
-    {
-      name: 'goteo',
-      path: '/goteo',
-      component: Wrapper,
-      meta: {
-        text: 'Goteo'
-      },
-      children: [{
-        name: 'goteo-projects',
-        path: 'projects',
-        component: Projects,
-        meta: {
-          text: 'Projects'
-        }
-      }]
+  {
+    name: 'home',
+    path: '/',
+    component: Home
+  },
+  {
+    name: 'goteo',
+    path: '/goteo',
+    component: Wrapper,
+    meta: {
+      text: 'Goteo'
     },
-    {
-      name: 'decidim',
-      path: '/decidim',
-      component: Wrapper,
+    children: [{
+      name: 'goteo-projects',
+      path: 'projects',
+      component: Projects,
       meta: {
-          text: 'Decidim'
-      },
-      children: [{
-        name: 'decidim-initiatives',
-        path: 'initiatives/:id?/:view?/:project?',
-        component: Initiatives,
-        meta: {
-            text: 'Initiatives'
-        }
-      }]
-    }
-  ]
+        text: 'Projects'
+      }
+    }]
+  },
+  {
+    name: 'decidim',
+    path: '/decidim',
+    component: Wrapper,
+    meta: {
+        text: 'Decidim'
+    },
+    children: [{
+      name: 'decidim-initiatives',
+      path: 'initiatives/:id?/:view?/:project?',
+      component: Initiatives,
+      meta: {
+          text: 'Initiatives'
+      }
+    }]
+  }
+]

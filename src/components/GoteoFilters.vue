@@ -7,13 +7,9 @@
               <span v-if="!hasFootprints" class="text-muted"><em>Filter by footprints</em></span>
             </p>
             <b-row>
-                <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="default" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
+                <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="link" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
             </b-row>
 
-            <!-- <multiselect v-model="filters.footprints" :options="footprintList" @input="onChange" :multiple="true" label="name" track-by="name" placeholder="Filter projects by footprint">
-                <template slot="tag" slot-scope={option,remove}><span class="multiselect__tag"><span><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</span> <i aria-hidden="true" tabindex="1" class="multiselect__tag-icon" @keydown.enter.prevent="remove(option)" @mousedown.prevent="remove(option)"></i></span></template>
-                <template slot="option" slot-scope={option}><img :src="option['icon-url']" class="image-circle"> {{ option.name }}</template>
-            </multiselect> -->
         </b-col>
         <b-col :class="'filter-sdgs' + (hasFootprints ? ' show-sdgs' : '')">
 
@@ -227,14 +223,6 @@ export default {
   filter: none;
 }
 
-// .col-2 {
-//   flex-shrink: 1;
-//   transition: all 400ms ease;
-// }
-// .col-6 {
-//   flex-grow: 1;
-//   transition: all 400ms ease;
-// }
 .filter-footprints,.filter-sdgs {
   width: 100%;
   max-width: 100%;

@@ -259,11 +259,11 @@ export default {
   img#map-radar {
     position:absolute;
     top:0;
-    left:0;
+    left:50%;
     right:0;
-    margin:0 auto;
-    height:100%;
-    width:auto;
+    margin:0 -250px;
+    height:500px;
+    width:500px;
     z-index:1000;
   }
 }

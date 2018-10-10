@@ -65,7 +65,6 @@ import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
 import Footprints from '../mixins/Footprints'
 import MapUtils from '../mixins/MapUtils'
-import Loaders from '../mixins/Loaders'
 
 export default {
   components: {
@@ -81,7 +80,7 @@ export default {
     'filters': Filters,
     'project-list': ProjectList
   },
-  mixins: [Loaders, MapUtils, Footprints],
+  mixins: [MapUtils, Footprints],
   data() {
     return {
       map: null,

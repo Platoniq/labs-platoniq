@@ -96,7 +96,6 @@ import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 // import Vue2LeafletHeatmap from 'vue2-leaflet-heatmap'
 import Switches from 'vue-switches'
 import Footprints from '../mixins/Footprints'
-import Loaders from '../mixins/Loaders'
 import MapUtils from '../mixins/MapUtils'
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
@@ -158,7 +157,7 @@ export default {
     Filters,
     ProjectList
   },
-  mixins: [Loaders, Footprints, MapUtils],
+  mixins: [Footprints, MapUtils],
   apollo: {
     initiative: {
       query,

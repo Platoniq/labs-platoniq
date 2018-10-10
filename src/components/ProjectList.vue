@@ -59,7 +59,6 @@
 <script>
 import Papa from 'papaparse'
 import moment from 'moment'
-import Loaders from '../mixins/Loaders'
 
 export default {
   name: "ProjectList",
@@ -105,7 +104,6 @@ export default {
       ],
     }
   },
-  mixins: [Loaders],
   methods: {
     getDate(date) {
       return moment(date).format('MMMM YYYY')

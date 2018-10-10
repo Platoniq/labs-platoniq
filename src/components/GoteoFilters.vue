@@ -2,9 +2,9 @@
   <div>
     <b-row>
         <b-col class="filter-footprints">
-            <p :title="getLoading()">
-              <v-icon v-if="isLoading()" name="spinner" spin/>
-              <span v-if="!hasFootprints" class="text-muted"><em>Filter by footprints</em></span>
+            <p v-if="!hasFootprints">
+              <v-icon v-if="isLoading('footprints')||isLoading('sdgs')" name="spinner" spin/>
+              <span class="text-muted"><em>Filter by footprints</em></span>
             </p>
             <b-row>
                 <b-btn class="col" v-for="f in footprintList" :key="f.id" @click="onChange('footprint', f)" variant="link" :pressed="!!hasFootprint(f)"><img class="image-footprint" :src="f['icon-url']" :title="f.name"></b-btn>
@@ -39,7 +39,6 @@
 <script>
 import Switches from 'vue-switches'
 import Multiselect from 'vue-multiselect'
-import Loaders from '../mixins/Loaders'
 
 export default {
   name: "GoteoFilters",
@@ -65,7 +64,6 @@ export default {
         default: true
     }
   },
-  mixins: [Loaders],
   components: {
     Switches,
     Multiselect

@@ -18,9 +18,16 @@ import App from './App.vue'
 import 'vue-awesome/icons'
 import Icon from 'vue-awesome/components/Icon'
 import SocialSharing from 'vue-social-sharing'
+// import Vuex from 'vuex' // Global states for Vue
 import routes from './routes.js'
+import Loaders from "./plugins/Loaders"
 import GoteoApi from "./plugins/GoteoApi/GoteoApi"
+import {globalStore} from './store.js'
 const conf = require("../config" + (process.env.NODE_ENV === 'production' ? '.production' : '') + ".json")
+
+// Vue.use(Vuex)
+// Provide some useful functions to control loading statuses from api calls
+Vue.use(Loaders, globalStore);
 
 // Fontawesome globally (in your main .js file)
 Vue.component('v-icon', Icon)

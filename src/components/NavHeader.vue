@@ -29,7 +29,6 @@
 
 <script>
 import routes from '../routes.js'
-import Loaders from '../mixins/Loaders.js'
 
 export default {
   data() {
@@ -37,7 +36,6 @@ export default {
       routes: routes,
     }
   },
-  mixins: [Loaders],
   computed: {
     section() {
         return this.$route.matched.length && this.$route.matched[0].name

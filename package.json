@@ -25,7 +25,8 @@
     "vue-switches": "^2.0.1",
     "vue2-leaflet": "^1.0.2",
     "vue2-leaflet-heatmap": "git+https://github.com/Platoniq/vue2-leaflet-heatmap.git",
-    "vue2-leaflet-markercluster": "^2.0.0"
+    "vue2-leaflet-markercluster": "^2.0.0",
+    "vuex": "^3.0.1"
   },
   "browserslist": [
     "> 1%",

@@ -1,4 +1,3 @@
-import Loaders from '../mixins/Loaders'
 
 export default {
   data() {
@@ -7,7 +6,6 @@ export default {
       sdgs: []
     }
   },
-  mixins: [Loaders],
   created() {
     // Load footprints from API
     if(!this.footprints.length) {

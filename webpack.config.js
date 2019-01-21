@@ -30,6 +30,11 @@ const config = {
   devtool: sourceMap ? 'cheap-module-eval-source-map' : undefined,
   module: {
     rules: [
+      { // fixes https://github.com/graphql/graphql-js/issues/1272'
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
+      },
       {
         test: /\.vue$/,
         loader: 'vue-loader',
@@ -43,26 +48,25 @@ const config = {
         test: /\.css$/,
         use: [
           'vue-style-loader',
-          'css-loader'
+          'css-loader',
         ],
       },
       {
         test: /\.scss$/,
         use: [
           'vue-style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap,
+            },
+          },
           {
             loader: 'sass-loader',
              options: {
                importer: nodeSassMagicImporter(),
                sourceMap
              },
-          },
-          {
-            loader: 'css-loader',
-            options: {
-              sourceMap,
-            },
           },
         ],
       },
@@ -100,7 +104,9 @@ const config = {
     alias: {
       'vue$': 'vue/dist/vue.esm.js'
     },
-    extensions: ['*', '.js', '.vue', '.json']
+    // extensions: ['*', '.js', '.vue', '.json']
+    // .mjs needed for https://github.com/graphql/graphql-js/issues/1272
+    extensions: ['*', '.mjs', '.js', '.vue', '.json', '.gql', '.graphql']
   },
   devServer: {
     historyApiFallback: true,

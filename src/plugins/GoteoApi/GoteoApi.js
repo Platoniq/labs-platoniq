@@ -39,7 +39,7 @@ const GoteoApi = {
           }
             params.limit = 50
           params.page = params.page || 0
-          console.log('preparing projects', params)
+          // console.log('preparing projects', params)
 
           this.cancel('project')
           this.sources.project = axios.CancelToken.source()
@@ -58,7 +58,7 @@ const GoteoApi = {
                 this.sources.project = null
                 console.log('finish loading projects')
               }
-              console.log('got goteo projects',params, response)
+              console.log('got goteo projects, params:', params, 'response', response)
             })
             .catch(error => {
               if (axios.isCancel(error)) {
@@ -94,7 +94,7 @@ const GoteoApi = {
                 this.sources.invest = null
                 console.log('finish loading invests')
               }
-              console.log('got goteo invests',response)
+              console.log('got goteo invests, response:',response)
             })
             .catch(error => {
               if (axios.isCancel(error)) {

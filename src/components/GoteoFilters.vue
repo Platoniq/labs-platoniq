@@ -83,7 +83,7 @@ export default {
       if(filter==='footprint') {
         this.filters.footprints = this.toggle(this.filters.footprints, f)
         }
-        console.log('onchange', filter, 'event:',this.emitEvent, 'filters', this.filters)
+        // console.log('onchange', filter, 'event:',this.emitEvent, 'filters', this.filters)
         if(this.emitEvent) this.$emit(this.emitEvent, this.filters)
     },
     toggle(list, el) {
@@ -112,14 +112,14 @@ export default {
           // api search
           this.$goteo.getProjects({project:p}, r => {
               if(r && r.items && r.items.length) {
-                console.log('fetch project', r, r.items[0])
+                // console.log('fetch project', r, r.items[0])
                 this.projectList.push(r.items[0])
                 this.filters.projects.unshift(r.items[0])
               }
           })
         })
       }
-      console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
+      // console.log('projectList', this.projectList, this.queryFilters.projects, this.filters.projects)
       // Load footprints from props, rebuild the model
       if(Array.isArray(this.queryFilters.footprints) && this.queryFilters.footprints.length != this.filters.footprints.length) {
         this.filters.footprints = []
@@ -156,7 +156,7 @@ export default {
       },
       filteredSdgList() {
           let footprints = this.hasFootprints ? this.filters.footprints.map(f => f.id) : []
-          console.log('footprints',footprints)
+          // console.log('footprints',footprints)
           return this.sdgList.filter(v => v.footprints.find(f => footprints.indexOf(f.id)))
       },
       queryFilters() {
@@ -166,23 +166,23 @@ export default {
   mounted() {
     this.setActiveFilters()
     // compute query filters
-    console.log('query filters', this.queryFilters, this.projectList, this.filters.projects)
+    // console.log('query filters', this.queryFilters, this.projectList, this.filters.projects)
   },
   watch: {
     '$route.query.filters'() {
-        console.log('change query string',this.$route.query)
+        // console.log('change query string',this.$route.query)
         this.setActiveFilters()
     },
     projectList() {
-        console.log('change projectList',this.projectList)
+        // console.log('change projectList',this.projectList)
         this.setActiveFilters()
     },
     footprintList() {
-        console.log('change footprintList',this.footprintList)
+        // console.log('change footprintList',this.footprintList)
         this.setActiveFilters()
     },
     sdgList() {
-        console.log('change sdgList',this.sdgList)
+        // console.log('change sdgList',this.sdgList)
         this.setActiveFilters()
     }
   }

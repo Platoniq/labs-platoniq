@@ -23,16 +23,16 @@
 
       <div>
         <b-table v-if="getView==='table'" v-bind:class="{muted: $apollo.loading }" bordered hover :items="component.meetings.edges" :fields="fields">
-          <template slot="id" slot-scope="data">
+          <template v-slot:cell(id)="data">
             {{ data.item.node.id }}
           </template>
-          <template slot="title" slot-scope="data">
+          <template v-slot:cell(title)="data">
             {{ data.item.node.title.translations[0].text }}
           </template>
-          <template slot="address" slot-scope="data">
+          <template v-slot:cell(address)="data">
             {{ data.item.node.address }}
           </template>
-          <template slot="coordinates" slot-scope="data">
+          <template v-slot:cell(coordinates)="data">
             {{ data.item.node.coordinates.latitude }},
             {{ data.item.node.coordinates.longitude }}
           </template>
@@ -66,7 +66,7 @@
             </l-marker>
           </l-marker-cluster>
 
-          <LeafletHeatmap v-if="project" :lat-lngs="investLocations"></LeafletHeatmap>
+          <l-leaflet-heatmap v-if="project" :lat-lngs="investLocations"></l-leaflet-heatmap>
         </l-map>
 
         <div class="text-muted">
@@ -81,7 +81,7 @@
         <b-button v-for="p in projects" :key="p.id" size="sm" :variant="statusColor(p.status)" :pressed="project==p.id" :to="{name:'decidim-initiatives', params: {id: id, view:'map', project: p.id}}" :title="p.status">{{p.name}}</b-button>
       </div> -->
 
-      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" v-on:goto-project="gotoProject"></project-list>
+      <project-list :projects="projects" :project="[project]" :sdgs="sdgs" :footprints="footprints" v-on:goto-project="gotoProject"></project-list>
 
       </div>
     </div>
@@ -92,8 +92,8 @@
 import L from 'leaflet';
 import { LMap, LTileLayer, LMarker,LPopup,LTooltip } from 'vue2-leaflet';
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
-import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
 // import Vue2LeafletHeatmap from 'vue2-leaflet-heatmap'
+import Vue2LeafletHeatmap from "../plugins/LeafletHeatmap/LeafletHeatmap.vue"
 import Switches from 'vue-switches'
 import Footprints from '../mixins/Footprints'
 import MapUtils from '../mixins/MapUtils'
@@ -148,13 +148,13 @@ query getInitiative($id: ID!) {
 export default {
   props: ['id', 'view', 'project'],
   components: {
-    LMap,
-    LTileLayer,
-    LMarker,
-    LPopup,
-    LTooltip,
+    'l-map': LMap,
+    'l-tile-layer': LTileLayer,
+    'l-marker': LMarker,
+    'l-popup': LPopup,
+    'l-tooltip': LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
-    LeafletHeatmap,
+    'l-leaflet-heatmap': Vue2LeafletHeatmap,
     Switches,
     Filters,
     ProjectList

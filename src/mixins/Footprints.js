@@ -11,11 +11,14 @@ export default {
     if(!this.footprints.length) {
       this.addLoading('footprints')
       this.axios
-      .get('/footprints/', {params: {lang: "en"}})
+      .get('/footprints/?lang=en', {
+        cache: {
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 1month cache
+       }})
       .then(response => {
         this.footprints = response.data.items
         this.removeLoading('footprints')
-        console.log('got goteo footprints', response, this.footprints)
+        // console.log('got goteo footprints', response, this.footprints)
       })
       .catch(error => {
         this.removeLoading('footprints')
@@ -26,9 +29,12 @@ export default {
     if(!this.sdgs.length) {
       this.addLoading('sdgs')
       this.axios
-      .get('/sdgs/', {params: {lang: "en"}})
+      .get('/sdgs/?lang=en', {
+        cache: {
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 1month cache
+      }})
       .then(response => {
-        console.log('got goteo sdgs', response)
+        // console.log('got goteo sdgs', response)
         this.sdgs = response.data.items
         this.removeLoading('sdgs')
       })

@@ -53,7 +53,7 @@ export default {
             text: i.title.translations[0].text
           }
         } )
-        console.log("We got some initiatives!", 'title',this.title, 'menu', this.menu, 'raw data', data)
+        // console.log("We got some initiatives!", 'title',this.title, 'menu', this.menu, 'raw data', data)
       }
     }
   },
@@ -66,10 +66,10 @@ export default {
   methods: {
     onLoading(loading) { //listen the children, pass it to the parent
       this.$emit('data-loading', loading)
-    },
-    onChangeInitiative() {
-      console.log('change', this.selected)
     }
+    // , onChangeInitiative() {
+    //    console.log('change', this.selected)
+    // }
   },
   computed: {
     selectedInitiativeId: {

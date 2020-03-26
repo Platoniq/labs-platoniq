@@ -32,7 +32,7 @@
             </l-marker>
           </l-marker-cluster>
 
-          <LeafletHeatmap :lat-lngs="investLocations"></LeafletHeatmap>
+          <l-leaflet-heatmap :lat-lngs="investLocations"></l-leaflet-heatmap>
 
         </l-map>
         <img v-if="isLoading('projects')" id="map-radar" src="static/img/radar.svg">
@@ -45,7 +45,7 @@
 
       <hr>
 
-      <project-list :projects="projects" :sdgs="sdgs" :footprints="footprints" v-on:goto-project="toggleRouteForProject"></project-list>
+      <project-list :projects="projects" :project="filters.projects" :sdgs="sdgs" :footprints="footprints" v-on:goto-project="toggleRouteForProject"></project-list>
 
     <div>
 
@@ -60,7 +60,8 @@
 import L from 'leaflet'
 import { LMap,LTileLayer,LCircle,LPolyline,LMarker,LPopup,LTooltip } from 'vue2-leaflet'
 import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
-import LeafletHeatmap from '../plugins/LeafletHeatmap/LeafletHeatmap'
+// import Vue2LeafletHeatmap from "vue2-leaflet-heatmap"
+import Vue2LeafletHeatmap from "../plugins/LeafletHeatmap/LeafletHeatmap.vue"
 import Filters from './GoteoFilters.vue'
 import ProjectList from './ProjectList.vue'
 import Footprints from '../mixins/Footprints'
@@ -68,15 +69,15 @@ import MapUtils from '../mixins/MapUtils'
 
 export default {
   components: {
-    LMap,
-    LTileLayer,
-    LMarker,
+    'l-map': LMap,
+    'l-tile-layer': LTileLayer,
+    'l-marker': LMarker,
     'l-circle': LCircle,
     'l-polyline': LPolyline,
-    LPopup,
-    LTooltip,
+    'l-popup': LPopup,
+    'l-tooltip': LTooltip,
     'l-marker-cluster': Vue2LeafletMarkerCluster,
-    LeafletHeatmap,
+    'l-leaflet-heatmap': Vue2LeafletHeatmap,
     'filters': Filters,
     'project-list': ProjectList
   },
@@ -150,6 +151,7 @@ export default {
           this.percent = parseInt(100 * (data.items.length + data.meta.limit * data.meta.page) / data.meta.total)
           if(this.percent>=100) this.removeLoading('projects')
           this.projects = [...this.projects, ...data.items]
+        console.log("curr project", this.projects)
         })
 
     },
@@ -212,7 +214,7 @@ export default {
   },
   computed: {
     projectLocations() {
-      console.log('project locations', this.filters.projects, this.projects.filter(p => this.filters.projects.indexOf(p.id) > -1 ), this.projects)
+      // console.log('project locations', this.filters.projects, this.projects.filter(p => this.filters.projects.indexOf(p.id) > -1 ), this.projects)
       if(this.filters.projects && this.filters.projects.length)
         return this.projects.filter(p => this.filters.projects.indexOf(p.id) > -1 )
       return this.projects

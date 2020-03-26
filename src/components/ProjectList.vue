@@ -27,30 +27,30 @@
     </b-row>
     <v-icon v-if="isLoading('projects')" name="spinner" spin/>
 
-    <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields">
-      <template slot="image" slot-scope="{item}">
-          <img :src="item['image-url']" class="icon-project">
+    <b-table v-if="projects.length" bordered hover :items="projects" :fields="fields" :tbody-tr-class="rowClass">
+      <template v-slot:cell(image)="d">
+        <img :src="d.item['image-url']" class="icon-project">
       </template>
-      <template slot="name" slot-scope="{item}">
-        <p>{{ item.name }}
-          <em class="float-right text-muted">{{ getDate(item['date-published']) }}</em>
+      <template v-slot:cell(name)="d">
+        <p>{{ d.item.name }}
+          <em class="float-right text-muted">{{ getDate(d.item['date-published']) }}</em>
         </p>
-        <p class="text-muted">{{ item['description-short'] }}</p>
+        <p class="text-muted">{{ d.item['description-short'] }}</p>
         <b-row>
           <b-col cols="7">
-            <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
+            <img class="icon-footprint" v-for="sdg in getFootprintsFromSocialCommitment(d.item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
           </b-col>
           <b-col>
-            <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
+            <img class="icon-sdg" v-for="sdg in getSdgsFromSocialCommitment(d.item['social-commitment-id'])" :key="sdg.id" :src="sdg['icon-url']" :title="sdg.name">
           </b-col>
         </b-row>
     </template>
-    <template slot="amount" slot-scope="{item}">
-        {{ item.amount }} €
+    <template v-slot:cell(amount)="d">
+        {{ d.item.amount }} €
     </template>
-    <template slot="links" slot-scope="{item}">
-        <b-btn title="Goto project page" :href="item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></b-btn>
-        <b-btn :title="inFilters(item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" @click="gotoProject(item)" exact :pressed="inFilters(item)"><v-icon alt="Show invests" name="donate"/></b-btn>
+    <template v-slot:cell(links)="d">
+        <b-btn title="Goto project page" :href="d.item['project-url']" target="_blank"><v-icon alt="Project page" name="link"/></b-btn>
+        <b-btn :title="inFilters(d.item) ? 'Remove this project from the heat map' : 'Show heat map for this project'" variant="info" @click="gotoProject(d.item)" exact :pressed="inFilters(d.item)"><v-icon alt="Show invests" name="donate"/></b-btn>
     </template>
     </b-table>
   </div>
@@ -63,6 +63,10 @@ import moment from 'moment'
 export default {
   name: "ProjectList",
   props: {
+    project: {
+      type: Array,
+      default: () => []
+    },
     projects: {
       type: Array,
       default: () => []
@@ -105,6 +109,10 @@ export default {
     }
   },
   methods: {
+    rowClass(item, type) {
+      if (!item || type !== 'row') return
+      if (this.project.includes(item.id)) return 'table-info'
+    },
     getDate(date) {
       return moment(date).format('MMMM YYYY')
     },

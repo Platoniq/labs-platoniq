@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1" width="128" height="128">
+  <circle cx="64" cy="64" r="64" fill="#00000022"/>
+  <g>
+      <linearGradient id="a">
+          <stop offset="0%" stop-color="#00ff00ff"/>
+          <stop offset="100%" stop-color="#ffffff00"/>
+      </linearGradient>
+      <path fill="url(#a)" fill-opacity=".5" d="M65.128 64.894l.025 60.968a61.781 61.781 0 0 1-32.011-8.315q-.705-.406-1.4-.83L62.531 63.4z"/>
+      <animateTransform attributeName="transform" type="rotate" from="0 64 64" to="360 64 64" dur="5s" repeatCount="indefinite"/>
+      <path d="M63.5 62l0 0-31 55-1-1z" stroke="#00ff00aa" fill="#00ff00aa" />
+  </g>
+</svg>

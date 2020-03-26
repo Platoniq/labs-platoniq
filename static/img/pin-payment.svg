@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 46 60" enable-background="new 0 0 46 60" xml:space="preserve">
+<switch>
+	<g>
+		<g>
+			<defs>
+				<rect id="SVGID_1_" width="46" height="60"/>
+			</defs>
+			<clipPath id="SVGID_2_">
+				<use xlink:href="#SVGID_1_" overflow="visible"/>
+			</clipPath>
+			<circle clip-path="url(#SVGID_2_)" fill="#a33230" cx="23.1" cy="23.4" r="15.1"/>
+			<path clip-path="url(#SVGID_2_)" fill="#aB000B" d="M23,0C10.5,0,0,10.5,0,23c0,8.4,3.9,17.5,11.2,26.1     c5.5,6.5,10.9,10.5,11.2,10.7c0.2,0.1,0.4,0.2,0.6,0.2c0.2,0,0.4-0.1,0.6-0.2c0.2-0.2,5.7-4.1,11.2-10.7C42.1,40.5,46,31.4,46,23     C46,10.5,35.5,0,23,0 M23,37c-7.7,0-14-6.3-14-14S15.3,9,23,9s14,6.3,14,14S30.7,37,23,37"/>
+		</g>
+	</g>
+</switch>
+</svg>

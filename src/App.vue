@@ -12,8 +12,6 @@
         <!-- component matched by the route will render here -->
         <router-view></router-view>
 
-    {{getLoaders}}
-
       </b-container>
     </main>
   </div>

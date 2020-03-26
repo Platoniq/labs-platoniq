@@ -116,6 +116,7 @@ query getInitiative($id: ID!) {
       name {
         translations {
           text
+          locale
         }
       }
       ... on Meetings {
@@ -127,6 +128,7 @@ query getInitiative($id: ID!) {
               title {
                 translations {
                   text
+                  locale
                 }
               }
               coordinates {

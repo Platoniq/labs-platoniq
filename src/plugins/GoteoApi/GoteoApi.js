@@ -19,6 +19,7 @@ const GoteoApi = {
 
         prepareParams(params) {
           let prepared = new URLSearchParams();
+          params.lang = "en";
           for (let p in params) {
             if (Array.isArray(params[p])) {
               params[p].forEach(v => prepared.append(p, v))

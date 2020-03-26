@@ -11,7 +11,7 @@ export default {
     if(!this.footprints.length) {
       this.addLoading('footprints')
       this.axios
-      .get('/footprints/')
+      .get('/footprints/', {params: {lang: "en"}})
       .then(response => {
         this.footprints = response.data.items
         this.removeLoading('footprints')
@@ -26,7 +26,7 @@ export default {
     if(!this.sdgs.length) {
       this.addLoading('sdgs')
       this.axios
-      .get('/sdgs/')
+      .get('/sdgs/', {params: {lang: "en"}})
       .then(response => {
         console.log('got goteo sdgs', response)
         this.sdgs = response.data.items

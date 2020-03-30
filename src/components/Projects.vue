@@ -27,7 +27,7 @@
           </l-marker-cluster>
 
           <l-marker-cluster :options="clusterOptionsPayment">
-            <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i)">
+            <l-marker v-for="i in invests" :key="i.id" :lat-lng="[i.latitude,i.longitude]" :options="{alt:i.amount}" :icon="getIcon('euro',i.amount)">
               <l-tooltip :content="i.amount + '€'"></l-tooltip>
             </l-marker>
           </l-marker-cluster>

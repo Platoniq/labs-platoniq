@@ -44,7 +44,7 @@ export default {
 
       // if(type === 'euro') ops.iconUrl = 'static/img/pin-payment.svg'
       if(type === 'euro') {
-        return L.divIcon({ html: '<div><span>' + ob.amount +'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
+        return L.divIcon({ html: '<div><span>' + ob +'€</span></div>', className: 'marker-cluster marker-cluster-payment', iconSize: L.point(40, 40) });
       }
       return L.icon(ops)
     },
